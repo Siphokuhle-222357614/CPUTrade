@@ -12,6 +12,15 @@ export default defineConfig({
       // deployed, instead of leaving a student stuck on a stale build until
       // they manually clear the cache.
       registerType: 'autoUpdate',
+      // A hand-written service worker (src/sw.js) instead of the plugin's
+      // generated one -- real Web Push needs a `push`/`notificationclick`
+      // listener, which a generated Workbox SW has no hook for.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+      },
       includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'CPUTrade',
@@ -36,28 +45,14 @@ export default defineConfig({
           { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      workbox: {
-        // Only precache the built app shell (JS/CSS/HTML/icons) — never the
-        // API. Runtime requests to /api/** are routed below with an explicit,
-        // conservative strategy so a stale cache can never serve someone
-        // else's chat messages or a suspended account a stale "active" status.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-        navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [
-          {
-            // Product listings/images are safe to show briefly stale while a
-            // fresh copy loads in the background -- keeps browsing snappy on
-            // poor campus wifi/mobile data without ever going fully offline
-            // for a logged-in, personalized view.
-            urlPattern: ({ url, request }) =>
-              request.method === 'GET' && /\/api\/products(\/|$|\?)/.test(url.pathname + url.search),
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'cputrade-products',
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 },
-            },
-          },
-        ],
+      // Precaching + the /api/products runtime-caching strategy both moved
+      // into src/sw.js, since injectManifest doesn't take a `workbox` block.
+      // Enabled in dev too (not just the production build) -- Web Push needs
+      // an actually-registered service worker to subscribe against, and that's
+      // exactly what's running under `npm run dev` while this gets tested.
+      devOptions: {
+        enabled: true,
+        type: 'module',
       },
     }),
   ],

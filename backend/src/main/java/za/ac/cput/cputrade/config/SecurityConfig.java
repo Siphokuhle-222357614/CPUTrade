@@ -103,6 +103,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/bulletin/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                        // Needed before pushManager.subscribe() can even be called — every other /api/push/**
+                        // route is a real subscribe/unsubscribe action and stays behind the anyRequest() rule below.
+                        .requestMatchers(HttpMethod.GET, "/api/push/public-key").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/appeals").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

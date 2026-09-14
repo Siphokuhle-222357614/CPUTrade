@@ -1,13 +1,15 @@
 <script setup>
-import { watch } from "vue";
-import { useRoute } from "vue-router";
+import { onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import NavBar from "./components/layout/NavBar.vue";
 import InstallPrompt from "./components/layout/InstallPrompt.vue";
+import PushOptInBanner from "./components/layout/PushOptInBanner.vue";
 import ToastContainer from "./components/common/ToastContainer.vue";
 import { useAuthStore } from "./stores/auth";
 import { useWishlistStore } from "./stores/wishlist";
 
 const route = useRoute();
+const router = useRouter();
 const auth = useAuthStore();
 const wishlist = useWishlistStore();
 
@@ -24,11 +26,25 @@ watch(
   },
   { immediate: true }
 );
+
+// Clicking a push notification posts {type:"navigate", link} to every open
+// tab (see src/sw.js) so an already-open tab jumps to it instead of only the
+// newly-focused/opened one doing so.
+onMounted(() => {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data?.type === "navigate" && event.data.link) {
+        router.push(event.data.link);
+      }
+    });
+  }
+});
 </script>
 
 <template>
   <ToastContainer />
   <InstallPrompt />
+  <PushOptInBanner />
   <NavBar />
   <main class="page">
     <router-view v-slot="{ Component }">

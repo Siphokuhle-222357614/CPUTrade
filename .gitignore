@@ -5,6 +5,8 @@ backend/uploads/
 # Frontend (Node / Vite)
 frontend/node_modules/
 frontend/dist/
+# vite-plugin-pwa's dev-mode service worker build output (devOptions.enabled)
+frontend/dev-dist/
 frontend/.env
 frontend/.env.local
 frontend/.env.production

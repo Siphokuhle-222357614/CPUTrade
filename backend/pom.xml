@@ -76,6 +76,22 @@
 			<version>0.12.6</version>
 			<scope>runtime</scope>
 		</dependency>
+
+		<!-- Real Web Push (VAPID) so a message/price-drop/etc. reaches an installed
+		     PWA even while it's closed, not just the 20s in-app notification poll. -->
+		<dependency>
+			<groupId>nl.martijndwars</groupId>
+			<artifactId>web-push</artifactId>
+			<version>5.1.1</version>
+		</dependency>
+		<!-- web-push's API is built directly on BouncyCastle's EC key types but leaves
+		     the actual BC jar for the consumer to pick — it isn't pulled in transitively. -->
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk18on</artifactId>
+			<version>1.79</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
