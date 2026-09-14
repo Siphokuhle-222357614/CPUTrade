@@ -49,6 +49,6 @@ onMounted(load);
     <p v-if="offline" class="alert alert-info">
       You're offline — showing a cached copy of this listing from your last visit.
     </p>
-    <ProductDetail :product="product" />
+    <ProductDetail :product="product" @updated="product = $event" />
   </template>
 </template>

@@ -25,12 +25,14 @@ const myConversationsAsSeller = computed(() =>
 );
 
 const stats = computed(() => {
-  const active = listings.value.filter((p) => p.active);
+  const active = listings.value.filter((p) => p.active && !p.sold);
+  const sold = listings.value.filter((p) => p.sold);
   const totalViews = listings.value.reduce((sum, p) => sum + (p.viewCount || 0), 0);
   const rated = listings.value.find((p) => p.sellerRatingCount > 0);
   return {
     total: listings.value.length,
     active: active.length,
+    sold: sold.length,
     totalViews,
     ratingAverage: rated?.sellerRatingAverage ?? null,
     ratingCount: rated?.sellerRatingCount ?? 0,
@@ -91,6 +93,10 @@ onMounted(load);
         <h2 style="margin: 0">{{ stats.totalViews }}</h2>
       </div>
       <div class="card">
+        <p class="field-hint" style="margin: 0">Items Sold</p>
+        <h2 style="margin: 0">{{ stats.sold }}</h2>
+      </div>
+      <div class="card">
         <p class="field-hint" style="margin: 0">Seller Rating</p>
         <h2 style="margin: 0">{{ stats.ratingAverage != null ? stats.ratingAverage.toFixed(1) : "—" }}</h2>
         <p class="field-hint" style="margin: 0">{{ stats.ratingCount }} rating{{ stats.ratingCount === 1 ? "" : "s" }}</p>
@@ -118,10 +124,12 @@ onMounted(load);
         <span>
           <strong>{{ product.title }}</strong> — {{ formatPrice(product.price) }} —
           {{ conditionLabels[product.condition] || product.condition }}
+          <template v-if="!product.sold && product.quantity > 1"> — ×{{ product.quantity }}</template>
         </span>
         <span class="row" style="width: auto; gap: var(--space-2)">
           <span class="field-hint">{{ product.viewCount }} view{{ product.viewCount === 1 ? "" : "s" }}</span>
-          <span v-if="product.active" class="badge badge-success">Active</span>
+          <span v-if="product.sold" class="badge badge-sold">Sold</span>
+          <span v-else-if="product.active" class="badge badge-success">Active</span>
           <span v-else class="badge badge-inactive">Removed</span>
         </span>
       </router-link>

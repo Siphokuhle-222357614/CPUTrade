@@ -1,6 +1,11 @@
 package za.ac.cput.cputrade.product;
 
+import za.ac.cput.cputrade.chat.Conversation;
+import za.ac.cput.cputrade.chat.ConversationRepository;
 import za.ac.cput.cputrade.common.exception.ApiException;
+import za.ac.cput.cputrade.product.dto.AddImagesRequest;
+import za.ac.cput.cputrade.product.dto.BuyerSummary;
+import za.ac.cput.cputrade.product.dto.MarkSoldRequest;
 import za.ac.cput.cputrade.product.dto.ProductCreateRequest;
 import za.ac.cput.cputrade.product.dto.ProductResponse;
 import za.ac.cput.cputrade.product.dto.ProductUpdateRequest;
@@ -17,21 +22,30 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ProductService {
 
+    /** Hard cap on photos per listing — generous for a resale marketplace, stingy enough to bound storage/abuse. */
+    private static final int MAX_IMAGES_PER_PRODUCT = 6;
+
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final ConversationRepository conversationRepository;
     private final RatingService ratingService;
     private final ImageStorageService imageStorageService;
 
     public ProductService(ProductRepository productRepository, UserRepository userRepository,
-                           RatingService ratingService, ImageStorageService imageStorageService) {
+                           ConversationRepository conversationRepository, RatingService ratingService,
+                           ImageStorageService imageStorageService) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.conversationRepository = conversationRepository;
         this.ratingService = ratingService;
         this.imageStorageService = imageStorageService;
     }
@@ -40,6 +54,10 @@ public class ProductService {
     public List<ProductResponse> search(Category category, String keyword, BigDecimal minPrice, BigDecimal maxPrice) {
         List<Specification<Product>> filters = new ArrayList<>();
         filters.add(ProductSpecifications.isActive());
+        // Sold-out listings have nothing left to buy — keep them off the browse/search
+        // feed, but their direct link still works (see getActiveById) so a buyer who
+        // already has it open (e.g. to leave a rating) isn't locked out.
+        filters.add(ProductSpecifications.notSold());
         if (category != null) {
             filters.add(ProductSpecifications.hasCategory(category));
         }
@@ -58,7 +76,7 @@ public class ProductService {
         return products.stream().map(this::toResponse).toList();
     }
 
-    /** A seller's business dashboard — every listing they own, active or not, newest first. */
+    /** A seller's business dashboard — every listing they own, active/sold/inactive, newest first. */
     public List<ProductResponse> listMine(Authentication auth) {
         User seller = currentUser(auth);
         return productRepository.findBySellerIdOrderByCreatedAtDesc(seller.getId()).stream()
@@ -85,10 +103,7 @@ public class ProductService {
             throw ApiException.forbidden("Your vendor account is pending admin approval");
         }
 
-        String imageUrl = null;
-        if (request.getImageBase64() != null && !request.getImageBase64().isBlank()) {
-            imageUrl = imageStorageService.store(request.getImageBase64()); // validates, then writes to disk
-        }
+        List<String> imageUrls = storeAll(request.getImages());
 
         Product product = Product.builder()
                 .seller(seller)
@@ -97,7 +112,8 @@ public class ProductService {
                 .price(request.getPrice())
                 .category(request.getCategory())
                 .condition(request.getCondition())
-                .imageUrl(imageUrl)
+                .quantity(request.getQuantityOrDefault())
+                .imageUrls(imageUrls)
                 .active(true)
                 .build();
 
@@ -109,18 +125,95 @@ public class ProductService {
         Product product = findByIdOrThrow(id);
         requireOwnerOrAdmin(product, auth);
 
-        if (request.getImageBase64() != null && !request.getImageBase64().isBlank()) {
-            String newImageUrl = imageStorageService.store(request.getImageBase64());
-            imageStorageService.delete(product.getImageUrl()); // clean up the file it's replacing
-            product.setImageUrl(newImageUrl);
-        }
-
         product.setTitle(request.getTitle());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
         product.setCategory(request.getCategory());
         product.setCondition(request.getCondition());
+        product.setQuantity(request.getQuantity());
 
+        return toResponse(productRepository.save(product));
+    }
+
+    /** Appends new photos (owner/admin), up to the per-listing cap. */
+    @Transactional
+    public ProductResponse addImages(Long id, AddImagesRequest request, Authentication auth) {
+        Product product = findByIdOrThrow(id);
+        requireOwnerOrAdmin(product, auth);
+
+        int existing = product.getImageUrls().size();
+        int incoming = request.getImages().size();
+        if (existing + incoming > MAX_IMAGES_PER_PRODUCT) {
+            throw ApiException.badRequest(
+                    "This listing already has " + existing + " photo(s) — up to "
+                            + MAX_IMAGES_PER_PRODUCT + " are allowed in total");
+        }
+
+        product.getImageUrls().addAll(storeAll(request.getImages()));
+        return toResponse(productRepository.save(product));
+    }
+
+    /** Removes one photo by URL (owner/admin) — the rest keep their relative order. */
+    @Transactional
+    public ProductResponse removeImage(Long id, String imageUrl, Authentication auth) {
+        Product product = findByIdOrThrow(id);
+        requireOwnerOrAdmin(product, auth);
+
+        boolean removed = product.getImageUrls().remove(imageUrl);
+        if (!removed) {
+            throw ApiException.notFound("That photo isn't on this listing");
+        }
+        imageStorageService.delete(imageUrl);
+        return toResponse(productRepository.save(product));
+    }
+
+    /** Seller-only: who has messaged them about this listing, to pick from when marking it sold. */
+    public List<BuyerSummary> interestedBuyers(Long id, Authentication auth) {
+        Product product = findByIdOrThrow(id);
+        requireOwnerOrAdmin(product, auth);
+
+        // A buyer can message once but send many messages — de-dupe by user, keep first-seen order.
+        Map<Long, BuyerSummary> byBuyerId = new LinkedHashMap<>();
+        for (Conversation conversation : conversationRepository.findByProductIdOrderByCreatedAtDesc(id)) {
+            User buyer = conversation.getBuyer();
+            byBuyerId.putIfAbsent(buyer.getId(), BuyerSummary.builder().id(buyer.getId()).username(buyer.getUsername()).build());
+        }
+        return List.copyOf(byBuyerId.values());
+    }
+
+    /** Seller-declared "no longer for sale" (owner/admin) — see {@code Product.sold}. */
+    @Transactional
+    public ProductResponse markSold(Long id, MarkSoldRequest request, Authentication auth) {
+        Product product = findByIdOrThrow(id);
+        requireOwnerOrAdmin(product, auth);
+
+        User soldTo = null;
+        if (request.getSoldToUserId() != null) {
+            boolean messagedAboutThisListing = conversationRepository
+                    .findByProductIdAndBuyerId(id, request.getSoldToUserId())
+                    .isPresent();
+            if (!messagedAboutThisListing) {
+                throw ApiException.badRequest("That user hasn't messaged you about this listing");
+            }
+            soldTo = userRepository.findById(request.getSoldToUserId())
+                    .orElseThrow(() -> ApiException.notFound("User not found"));
+        }
+
+        product.setSold(true);
+        product.setSoldAt(LocalDateTime.now());
+        product.setSoldTo(soldTo);
+        return toResponse(productRepository.save(product));
+    }
+
+    /** Undo a mistaken "mark as sold" (owner/admin) — puts the listing back in marketplace search. */
+    @Transactional
+    public ProductResponse markAvailable(Long id, Authentication auth) {
+        Product product = findByIdOrThrow(id);
+        requireOwnerOrAdmin(product, auth);
+
+        product.setSold(false);
+        product.setSoldAt(null);
+        product.setSoldTo(null);
         return toResponse(productRepository.save(product));
     }
 
@@ -129,13 +222,26 @@ public class ProductService {
         Product product = findByIdOrThrow(id);
         requireOwnerOrAdmin(product, auth);
         productRepository.delete(product);
-        imageStorageService.delete(product.getImageUrl());
+        for (String imageUrl : product.getImageUrls()) {
+            imageStorageService.delete(imageUrl);
+        }
     }
 
     /** Public so AdminService can reuse the same rating-aware mapping. */
     public ProductResponse toResponse(Product product) {
         RatingSummary sellerRating = ratingService.summarize(product.getSeller().getId());
         return ProductResponse.from(product, sellerRating);
+    }
+
+    private List<String> storeAll(List<String> base64Images) {
+        if (base64Images == null || base64Images.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<String> urls = new ArrayList<>(base64Images.size());
+        for (String base64Image : base64Images) {
+            urls.add(imageStorageService.store(base64Image)); // validates, then writes to disk
+        }
+        return urls;
     }
 
     private Product findByIdOrThrow(Long id) {

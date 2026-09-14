@@ -29,3 +29,23 @@ export function updateProduct(id, payload) {
 export function deleteProduct(id) {
   return client.delete(`/products/${id}`);
 }
+
+export function getInterestedBuyers(id) {
+  return client.get(`/products/${id}/interested-buyers`);
+}
+
+export function markSold(id, soldToUserId) {
+  return client.patch(`/products/${id}/mark-sold`, soldToUserId ? { soldToUserId } : {});
+}
+
+export function markAvailable(id) {
+  return client.patch(`/products/${id}/mark-available`);
+}
+
+export function addProductImages(id, images) {
+  return client.post(`/products/${id}/images`, { images });
+}
+
+export function removeProductImage(id, url) {
+  return client.delete(`/products/${id}/images`, { params: { url } });
+}

@@ -15,4 +15,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     /** Shown on a user's public profile — active listings only. */
     long countBySellerIdAndActiveTrue(Long sellerId);
+
+    /** Shown on a user's public profile as a trust signal — "N completed sales". */
+    long countBySellerIdAndSoldTrue(Long sellerId);
 }

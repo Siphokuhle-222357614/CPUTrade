@@ -1,6 +1,7 @@
 package za.ac.cput.cputrade.product.dto;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -11,7 +12,13 @@ import za.ac.cput.cputrade.product.Condition;
 
 import java.math.BigDecimal;
 
-/** Full replace of a listing's editable fields (US2.2) — not a partial patch. */
+/**
+ * Full replace of a listing's editable text/detail fields (US2.2) — not a
+ * partial patch. Photos are deliberately not part of this DTO: they're
+ * managed incrementally through the dedicated add/remove photo endpoints
+ * instead, since re-sending every existing photo as Base64 on every text
+ * edit would be wasteful and easy to get wrong.
+ */
 @Getter
 @Setter
 public class ProductUpdateRequest {
@@ -33,6 +40,7 @@ public class ProductUpdateRequest {
     @NotNull
     private Condition condition;
 
-    /** Optional: omit/blank to keep the existing image; a new value replaces it (old file is deleted). */
-    private String imageBase64;
+    @NotNull
+    @Min(value = 1, message = "quantity must be at least 1")
+    private Integer quantity;
 }

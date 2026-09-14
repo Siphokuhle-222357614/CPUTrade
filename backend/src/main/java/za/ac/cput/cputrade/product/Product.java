@@ -10,14 +10,16 @@ import za.ac.cput.cputrade.user.User;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A product listing (US2.1, US2.2, US3.1, US6.3).
  *
  * <p>Photos are validated (JPEG/PNG, decoded size &lt;= 500KB — see
  * {@code ImageValidator}) and written to disk by {@code ImageStorageService}
- * before this entity is ever persisted; {@code imageUrl} only ever holds the
- * resulting URL, never the image bytes themselves.
+ * before this entity is ever persisted; {@code imageUrls} only ever holds
+ * the resulting URLs, never the image bytes themselves.
  */
 @Entity
 @Table(name = "products")
@@ -55,12 +57,63 @@ public class Product {
     @Column(name = "item_condition", nullable = false, length = 20)
     private Condition condition;
 
+    /**
+     * How many identical units the seller has (e.g. a vendor with 10 of the
+     * same phone case) — purely informational, since there's no cart/order
+     * flow to decrement it automatically. Always &gt;= 1; a seller with none
+     * left uses {@link #sold} instead of setting this to 0.
+     *
+     * <p>{@code @ColumnDefault} matters here, not just {@code @Builder.Default}:
+     * without it, adding this NOT NULL column to a table that already has
+     * rows backfills every existing listing to MySQL's implicit int default
+     * of 0 — a real bug hit once already (every pre-existing listing showed
+     * "0 available" until corrected) — instead of the sensible "at least 1".
+     */
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("1")
+    @Builder.Default
+    private int quantity = 1;
+
+    /**
+     * Every photo attached to this listing, in upload order — an
+     * {@code @ElementCollection} rather than a full entity since nothing
+     * beyond "which URLs, in what order" is ever needed. Backed by a
+     * separate {@code product_images} table (one row per photo) instead of
+     * a single column, so a listing can carry more than one photo.
+     */
+    @ElementCollection
+    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+    @OrderColumn(name = "sort_order")
     @Column(name = "image_url", length = 500)
-    private String imageUrl;
+    @Builder.Default
+    private List<String> imageUrls = new ArrayList<>();
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    /**
+     * Seller-declared "no longer for sale" — distinct from {@link #active}
+     * (which only ever means "not removed by an admin"). A sold listing
+     * stays active/visible on its own detail page (so the buyer can still
+     * see it and leave a rating) but is excluded from marketplace search
+     * results, and shows a "Sold" badge instead of an active listing.
+     */
+    @Column(name = "sold", nullable = false)
+    @Builder.Default
+    private boolean sold = false;
+
+    @Column(name = "sold_at")
+    private LocalDateTime soldAt;
+
+    /**
+     * Optional — the seller can name who they sold it to (picked from
+     * people who messaged them about this listing) so the app can credit
+     * that specific trade; left null if they don't specify.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sold_to_user_id")
+    private User soldTo;
 
     // US2.4: incremented each time a shopper opens the listing's detail page
     // (ProductService#getActiveById) — not incremented by search/list results.

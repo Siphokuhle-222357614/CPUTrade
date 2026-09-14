@@ -96,8 +96,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         // Must precede the broader GET /api/products/** permitAll rule below —
-                        // Spring Security uses the first matching rule, and /mine needs auth.
+                        // Spring Security uses the first matching rule, and both need auth
+                        // (the second is seller-only business data, checked again in the service).
                         .requestMatchers(HttpMethod.GET, "/api/products/mine").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/products/*/interested-buyers").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/bulletin/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()

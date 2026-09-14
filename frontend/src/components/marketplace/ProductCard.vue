@@ -27,13 +27,17 @@ function formatPrice(price) {
     <div class="thumb">
       <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.title" />
       <span v-else style="font-size: 32px">📦</span>
+      <span v-if="product.sold" class="badge badge-sold sold-ribbon">Sold</span>
     </div>
     <strong>{{ product.title }}</strong>
     <div class="row">
       <span class="price">{{ formatPrice(product.price) }}</span>
       <span class="badge badge-condition">{{ conditionLabels[product.condition] || product.condition }}</span>
     </div>
-    <span v-if="product.freecycle" class="badge badge-free">♻️ Freecycle</span>
+    <div class="row">
+      <span v-if="product.freecycle" class="badge badge-free">♻️ Freecycle</span>
+      <span v-if="!product.sold && product.quantity > 1" class="badge badge-condition">×{{ product.quantity }}</span>
+    </div>
     <SellerRatingBadge :average="product.sellerRatingAverage" :count="product.sellerRatingCount" />
   </router-link>
 </template>

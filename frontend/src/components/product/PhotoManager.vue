@@ -1,24 +1,30 @@
 <script setup>
 import { ref } from "vue";
+import { addProductImages, removeProductImage } from "../../api/products";
 
-// US2.1: JPEG/PNG only, decoded size <= 500KB per photo. This is a fast
-// client-side pre-check for UX only — the server re-validates on the
-// decoded bytes, since Base64 inflates size by ~33% and the client can't be
-// trusted. Up to MAX_PHOTOS per listing, matching the server-side cap.
+// Live photo management for an existing listing — each add/remove is its
+// own API call (unlike the rest of the edit form, which batches changes
+// behind one "Save"), since photos are stored server-side as files rather
+// than form state, and re-encoding the ones you're keeping just to satisfy
+// a "full replace" save would be wasteful and easy to get wrong.
 const MAX_BYTES = 500 * 1024;
 const MAX_PHOTOS = 6;
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 
 const props = defineProps({
-  // Array of new-upload Base64 strings (no data: prefix), in upload order.
-  modelValue: {
+  productId: {
+    type: [String, Number],
+    required: true,
+  },
+  images: {
     type: Array,
-    default: () => [],
+    required: true,
   },
 });
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["updated"]);
 
 const error = ref("");
+const busy = ref(false);
 
 function stripPrefix(dataUrlOrBase64) {
   const commaIndex = dataUrlOrBase64.indexOf(",");
@@ -39,9 +45,10 @@ function readAsBase64(file) {
 async function handleFileChange(event) {
   error.value = "";
   const files = Array.from(event.target.files || []);
-  event.target.value = ""; // let the same file be re-picked later if removed
+  event.target.value = "";
+  if (!files.length) return;
 
-  const room = MAX_PHOTOS - props.modelValue.length;
+  const room = MAX_PHOTOS - props.images.length;
   if (files.length > room) {
     error.value = `You can add ${room} more photo${room === 1 ? "" : "s"} (${MAX_PHOTOS} max per listing).`;
     return;
@@ -59,40 +66,57 @@ async function handleFileChange(event) {
     }
     accepted.push(await readAsBase64(file));
   }
+  if (!accepted.length) return;
 
-  if (accepted.length) {
-    emit("update:modelValue", [...props.modelValue, ...accepted]);
+  busy.value = true;
+  try {
+    const { data } = await addProductImages(props.productId, accepted);
+    emit("updated", data);
+  } catch (err) {
+    error.value = err.response?.data?.message || "Could not add those photos.";
+  } finally {
+    busy.value = false;
   }
 }
 
-function removePhoto(index) {
-  const next = [...props.modelValue];
-  next.splice(index, 1);
-  emit("update:modelValue", next);
+async function removePhoto(url) {
+  error.value = "";
+  busy.value = true;
+  try {
+    const { data } = await removeProductImage(props.productId, url);
+    emit("updated", data);
+  } catch (err) {
+    error.value = err.response?.data?.message || "Could not remove that photo.";
+  } finally {
+    busy.value = false;
+  }
 }
 </script>
 
 <template>
   <div class="field">
-    <label>Photos (JPEG/PNG, max 500KB each, up to {{ MAX_PHOTOS }})</label>
-    <input
-      type="file"
-      accept="image/jpeg,image/png"
-      multiple
-      :disabled="modelValue.length >= MAX_PHOTOS"
-      @change="handleFileChange"
-    />
+    <label>Photos ({{ images.length }}/{{ MAX_PHOTOS }})</label>
     <p v-if="error" class="field-error">{{ error }}</p>
-    <p v-if="modelValue.length >= MAX_PHOTOS" class="field-hint">You've reached the {{ MAX_PHOTOS }}-photo limit.</p>
 
-    <div v-if="modelValue.length" class="photo-preview-row">
-      <div v-for="(photo, index) in modelValue" :key="index" class="photo-preview">
-        <img :src="`data:image/jpeg;base64,${photo}`" :alt="`Photo ${index + 1}`" />
-        <button type="button" class="photo-preview-remove" aria-label="Remove photo" @click="removePhoto(index)">
+    <div v-if="images.length" class="photo-preview-row">
+      <div v-for="url in images" :key="url" class="photo-preview">
+        <img :src="url" alt="Listing photo" />
+        <button type="button" class="photo-preview-remove" :disabled="busy" aria-label="Remove photo" @click="removePhoto(url)">
           ✕
         </button>
       </div>
     </div>
+    <p v-else class="field-hint">No photos yet.</p>
+
+    <input
+      type="file"
+      accept="image/jpeg,image/png"
+      multiple
+      :disabled="busy || images.length >= MAX_PHOTOS"
+      style="margin-top: var(--space-2)"
+      @change="handleFileChange"
+    />
+    <p v-if="images.length >= MAX_PHOTOS" class="field-hint">You've reached the {{ MAX_PHOTOS }}-photo limit.</p>
   </div>
 </template>
 

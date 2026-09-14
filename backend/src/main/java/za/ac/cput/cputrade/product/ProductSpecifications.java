@@ -18,6 +18,11 @@ public final class ProductSpecifications {
         return (root, query, cb) -> cb.isTrue(root.get("active"));
     }
 
+    /** Excludes seller-marked-sold listings from marketplace browsing (they stay reachable by direct link). */
+    public static Specification<Product> notSold() {
+        return (root, query, cb) -> cb.isFalse(root.get("sold"));
+    }
+
     public static Specification<Product> hasCategory(Category category) {
         return (root, query, cb) -> cb.equal(root.get("category"), category);
     }

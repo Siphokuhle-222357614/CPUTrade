@@ -66,6 +66,10 @@ watch(
           <strong>{{ profile.activeListingCount }}</strong>
         </div>
         <div class="row">
+          <span>Items sold</span>
+          <strong>{{ profile.completedSalesCount }}</strong>
+        </div>
+        <div class="row">
           <span>Member since</span>
           <strong>{{ formatDateTime(profile.memberSince) }}</strong>
         </div>

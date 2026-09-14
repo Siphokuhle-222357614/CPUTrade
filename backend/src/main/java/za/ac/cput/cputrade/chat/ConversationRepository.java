@@ -10,4 +10,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     Optional<Conversation> findByProductIdAndBuyerId(Long productId, Long buyerId);
 
     List<Conversation> findByBuyerIdOrSellerIdOrderByCreatedAtDesc(Long buyerId, Long sellerId);
+
+    /** Everyone who has messaged the seller about this listing — the "mark as sold to" candidate list. */
+    List<Conversation> findByProductIdOrderByCreatedAtDesc(Long productId);
 }

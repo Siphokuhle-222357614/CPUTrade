@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ChatService {
@@ -66,10 +67,16 @@ public class ChatService {
         }
         checkNotBlocked(buyer, product.getSeller());
 
-        Conversation conversation = conversationRepository.findByProductIdAndBuyerId(productId, buyer.getId())
-                .orElseGet(() -> conversationRepository.save(
-                        Conversation.builder().product(product).buyer(buyer).seller(product.getSeller()).build()
-                ));
+        Optional<Conversation> existing = conversationRepository.findByProductIdAndBuyerId(productId, buyer.getId());
+        // Block starting a *new* thread about something already sold, but let a buyer who
+        // was already chatting about it (e.g. to arrange pickup) keep using that thread.
+        if (existing.isEmpty() && product.isSold()) {
+            throw ApiException.badRequest("This item has already been sold");
+        }
+
+        Conversation conversation = existing.orElseGet(() -> conversationRepository.save(
+                Conversation.builder().product(product).buyer(buyer).seller(product.getSeller()).build()
+        ));
 
         return ConversationResponse.from(conversation);
     }

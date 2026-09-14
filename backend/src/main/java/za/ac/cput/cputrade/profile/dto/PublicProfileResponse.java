@@ -20,6 +20,8 @@ public class PublicProfileResponse {
     private Double ratingAverage;
     private long ratingCount;
     private long activeListingCount;
+    /** A trust signal: how many listings this seller has marked as sold. */
+    private long completedSalesCount;
     private boolean online;
     private LocalDateTime lastActiveAt;
 }

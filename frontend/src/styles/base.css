@@ -285,6 +285,10 @@ button.card:hover {
   background: var(--color-warning-bg);
   color: var(--color-warning);
 }
+.badge-sold {
+  background: rgba(22, 48, 92, 0.08);
+  color: var(--color-primary);
+}
 
 /* --- Nav bar --- */
 .navbar {
@@ -377,6 +381,7 @@ button.card:hover {
 }
 
 .product-card .thumb {
+  position: relative;
   aspect-ratio: 1 / 1;
   width: 100%;
   border-radius: var(--radius-card);
@@ -385,6 +390,12 @@ button.card:hover {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+.sold-ribbon {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
 }
 
 .product-card .thumb img {

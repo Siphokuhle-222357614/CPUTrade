@@ -2,6 +2,7 @@
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import ImageUploadInput from "./ImageUploadInput.vue";
+import PhotoManager from "./PhotoManager.vue";
 import { createProduct, updateProduct } from "../../api/products";
 
 const props = defineProps({
@@ -22,25 +23,40 @@ const form = reactive({
   price: props.initial?.price ?? "",
   category: props.initial?.category || "TEXTBOOKS",
   condition: props.initial?.condition || "GOOD",
-  imageBase64: "", // only ever holds a *new* upload — see ImageUploadInput
+  quantity: props.initial?.quantity ?? 1,
+  images: [], // create-only: new-upload Base64 strings — see ImageUploadInput
 });
+
+// Editing a listing manages its photos live (see PhotoManager) rather than
+// through this form's Save button, so the gallery shown while editing needs
+// its own reactive copy that updates as photos are added/removed.
+const editImages = ref(props.initial?.imageUrls || []);
 
 async function handleSubmit() {
   errorMessage.value = "";
   loading.value = true;
   try {
-    const payload = {
-      title: form.title,
-      description: form.description,
-      price: Number(form.price),
-      category: form.category,
-      condition: form.condition,
-      imageBase64: form.imageBase64 || null,
-    };
-
-    const response = props.initial
-      ? await updateProduct(props.initial.id, payload)
-      : await createProduct(payload);
+    let response;
+    if (props.initial) {
+      response = await updateProduct(props.initial.id, {
+        title: form.title,
+        description: form.description,
+        price: Number(form.price),
+        category: form.category,
+        condition: form.condition,
+        quantity: Number(form.quantity),
+      });
+    } else {
+      response = await createProduct({
+        title: form.title,
+        description: form.description,
+        price: Number(form.price),
+        category: form.category,
+        condition: form.condition,
+        quantity: Number(form.quantity),
+        images: form.images,
+      });
+    }
 
     router.push({ name: "product-detail", params: { id: response.data.id } });
   } catch (err) {
@@ -58,6 +74,8 @@ async function handleSubmit() {
 
     <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
 
+    <PhotoManager v-if="initial" :product-id="initial.id" :images="editImages" @updated="(p) => (editImages = p.imageUrls)" />
+
     <form @submit.prevent="handleSubmit">
       <div class="field">
         <label for="title">Title</label>
@@ -73,6 +91,12 @@ async function handleSubmit() {
         <label for="price">Price (R)</label>
         <input id="price" v-model="form.price" type="number" min="0" step="0.01" required />
         <p class="field-hint">Set to 0 to give the item away for free.</p>
+      </div>
+
+      <div class="field">
+        <label for="quantity">Quantity available</label>
+        <input id="quantity" v-model="form.quantity" type="number" min="1" step="1" required />
+        <p class="field-hint">How many identical units you have — e.g. 10 of the same phone case.</p>
       </div>
 
       <div class="field">
@@ -97,7 +121,7 @@ async function handleSubmit() {
         </select>
       </div>
 
-      <ImageUploadInput v-model="form.imageBase64" :existing-image-url="initial?.imageUrl" />
+      <ImageUploadInput v-if="!initial" v-model="form.images" />
 
       <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
         {{ loading ? "Saving…" : initial ? "Save Changes" : "Create Listing" }}

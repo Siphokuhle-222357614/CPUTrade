@@ -36,6 +36,9 @@ public class RatingService {
         if (seller.getId().equals(rater.getId())) {
             throw ApiException.badRequest("You cannot rate your own listing");
         }
+        if (!product.isSold()) {
+            throw ApiException.badRequest("You can rate a seller once they've marked this listing as sold");
+        }
         if (ratingRepository.existsByProductIdAndRaterId(productId, rater.getId())) {
             throw ApiException.conflict("You have already rated this listing");
         }

@@ -42,6 +42,7 @@ public class UserProfileService {
                 .ratingAverage(rating.average())
                 .ratingCount(rating.count())
                 .activeListingCount(productRepository.countBySellerIdAndActiveTrue(userId))
+                .completedSalesCount(productRepository.countBySellerIdAndSoldTrue(userId))
                 .online(isOnline(user))
                 .lastActiveAt(user.getLastActiveAt())
                 .build();

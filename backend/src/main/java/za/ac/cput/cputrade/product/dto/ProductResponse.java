@@ -10,6 +10,7 @@ import za.ac.cput.cputrade.rating.dto.RatingSummary;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -23,8 +24,18 @@ public class ProductResponse {
     private BigDecimal price;
     private Category category;
     private Condition condition;
+    /** How many identical units the seller has (informational — no cart/order flow decrements it). */
+    private int quantity;
+    /** The first photo, if any — kept for callers that only ever show one cover image (e.g. the marketplace grid). */
     private String imageUrl;
+    /** Every photo attached to this listing, in upload order. Empty (never null) when there are none. */
+    private List<String> imageUrls;
     private boolean active;
+    /** Seller-declared "no longer for sale" — see {@code Product.sold}. */
+    private boolean sold;
+    private LocalDateTime soldAt;
+    /** Null unless the seller named who they sold it to. */
+    private String soldToUsername;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     /** Null when the seller has no ratings yet (US6.1). */
@@ -36,6 +47,7 @@ public class ProductResponse {
     private boolean freecycle;
 
     public static ProductResponse from(Product product, RatingSummary sellerRating) {
+        List<String> images = product.getImageUrls() != null ? product.getImageUrls() : List.of();
         return ProductResponse.builder()
                 .id(product.getId())
                 .sellerId(product.getSeller().getId())
@@ -45,8 +57,13 @@ public class ProductResponse {
                 .price(product.getPrice())
                 .category(product.getCategory())
                 .condition(product.getCondition())
-                .imageUrl(product.getImageUrl())
+                .quantity(product.getQuantity())
+                .imageUrl(images.isEmpty() ? null : images.get(0))
+                .imageUrls(images)
                 .active(product.isActive())
+                .sold(product.isSold())
+                .soldAt(product.getSoldAt())
+                .soldToUsername(product.getSoldTo() != null ? product.getSoldTo().getUsername() : null)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .sellerRatingAverage(sellerRating.average())
