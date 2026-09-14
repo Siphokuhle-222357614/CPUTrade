@@ -12,6 +12,10 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  quantity: {
+    type: Number,
+    default: 1,
+  },
 });
 const emit = defineEmits(["close", "sold"]);
 
@@ -54,9 +58,15 @@ async function confirm() {
 </script>
 
 <template>
-  <Modal :open="open" title="Mark as Sold" @close="emit('close')">
+  <Modal :open="open" :title="quantity > 1 ? 'Record a Sale' : 'Mark as Sold'" @close="emit('close')">
     <p class="field-hint">
-      This hides the listing from marketplace search and lets the buyer leave you a rating. You can undo this later.
+      <template v-if="quantity > 1">
+        This records one sold and leaves {{ quantity - 1 }} more available — the listing only leaves marketplace
+        search once you've sold the last one.
+      </template>
+      <template v-else>
+        This hides the listing from marketplace search and lets the buyer leave you a rating. You can undo this later.
+      </template>
     </p>
 
     <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>

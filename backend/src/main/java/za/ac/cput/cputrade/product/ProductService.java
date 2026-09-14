@@ -194,11 +194,24 @@ public class ProductService {
         return List.copyOf(byBuyerId.values());
     }
 
-    /** Seller-declared "no longer for sale" (owner/admin) — see {@code Product.sold}. */
+    /**
+     * Records one unit sold (owner/admin) — decrements {@link Product#quantity}
+     * by one rather than always closing out the whole listing, so a seller
+     * with several identical units (e.g. 4 pens) can sell them one at a time
+     * and the listing only disappears from marketplace search once the last
+     * one goes. Only the sale that empties the stock sets {@code soldTo}/
+     * {@code soldAt}/{@code sold=true} — there's no per-unit buyer record for
+     * whoever bought the ones before it, since nothing here tracks individual
+     * orders (see the {@code quantity} javadoc on {@link Product}).
+     */
     @Transactional
     public ProductResponse markSold(Long id, MarkSoldRequest request, Authentication auth) {
         Product product = findByIdOrThrow(id);
         requireOwnerOrAdmin(product, auth);
+
+        if (product.isSold()) {
+            throw ApiException.badRequest("This listing is already marked sold");
+        }
 
         User soldTo = null;
         if (request.getSoldToUserId() != null) {
@@ -212,16 +225,28 @@ public class ProductService {
                     .orElseThrow(() -> ApiException.notFound("User not found"));
         }
 
-        product.setSold(true);
-        product.setSoldAt(LocalDateTime.now());
-        product.setSoldTo(soldTo);
+        boolean soldOut = product.getQuantity() <= 1;
+        product.setQuantity(Math.max(product.getQuantity() - 1, 0));
+        if (soldOut) {
+            product.setSold(true);
+            product.setSoldAt(LocalDateTime.now());
+            product.setSoldTo(soldTo);
+        }
         Product saved = productRepository.save(product);
-        notifyWishlisters(saved, NotificationType.WISHLIST_ITEM_SOLD,
-                "\"" + saved.getTitle() + "\" was just sold — better luck with the next one!");
+        if (soldOut) {
+            notifyWishlisters(saved, NotificationType.WISHLIST_ITEM_SOLD,
+                    "\"" + saved.getTitle() + "\" was just sold — better luck with the next one!");
+        }
         return toResponse(saved);
     }
 
-    /** Undo a mistaken "mark as sold" (owner/admin) — puts the listing back in marketplace search. */
+    /**
+     * Undo a mistaken "mark as sold" (owner/admin) — puts the listing back in
+     * marketplace search. Also restores one unit of stock if the listing had
+     * sold all the way out (quantity 0) — there's no decrement history to
+     * restore from, so this assumes the mistake being undone is the one that
+     * just closed it out.
+     */
     @Transactional
     public ProductResponse markAvailable(Long id, Authentication auth) {
         Product product = findByIdOrThrow(id);
@@ -230,6 +255,9 @@ public class ProductService {
         product.setSold(false);
         product.setSoldAt(null);
         product.setSoldTo(null);
+        if (product.getQuantity() <= 0) {
+            product.setQuantity(1);
+        }
         return toResponse(productRepository.save(product));
     }
 

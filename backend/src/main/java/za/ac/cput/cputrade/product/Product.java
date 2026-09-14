@@ -58,10 +58,15 @@ public class Product {
     private Condition condition;
 
     /**
-     * How many identical units the seller has (e.g. a vendor with 10 of the
-     * same phone case) — purely informational, since there's no cart/order
-     * flow to decrement it automatically. Always &gt;= 1; a seller with none
-     * left uses {@link #sold} instead of setting this to 0.
+     * How many identical units the seller has left (e.g. a vendor with 10 of
+     * the same phone case) — decremented by one each time
+     * {@code ProductService#markSold} is called, rather than always closing
+     * out the whole listing on the first sale. Only reaches 0 once every unit
+     * has sold, at which point {@link #sold} flips true and the listing
+     * leaves marketplace search; while &gt;= 1 the listing stays up with a
+     * "×N left" badge. There's still no full cart/order flow — this is a
+     * running count, not a line-itemed order history, so only the sale that
+     * empties it records {@link #soldTo}/{@link #soldAt}.
      *
      * <p>{@code @ColumnDefault} matters here, not just {@code @Builder.Default}:
      * without it, adding this NOT NULL column to a table that already has

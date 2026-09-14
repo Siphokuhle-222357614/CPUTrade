@@ -100,7 +100,11 @@ async function handleDelete() {
 function handleMarkedSold(updated) {
   showMarkSoldDialog.value = false;
   soldBurstKey.value++;
-  toast.success("Marked as sold — nice work! 🎉");
+  toast.success(
+    updated.sold
+      ? "Marked as sold — nice work! 🎉"
+      : `Nice, one sold! ${updated.quantity} left in stock. 🎉`
+  );
   emit("updated", updated);
 }
 
@@ -183,7 +187,7 @@ async function handleMarkAvailable() {
           Edit
         </router-link>
         <button v-if="!product.sold" type="button" class="btn btn-accent" @click="showMarkSoldDialog = true">
-          Mark as Sold
+          {{ product.quantity > 1 ? "Sell One" : "Mark as Sold" }}
         </button>
         <button v-else type="button" class="btn btn-outline" :disabled="unmarkingSold" @click="handleMarkAvailable">
           {{ unmarkingSold ? "Updating…" : "Mark as Available Again" }}
@@ -215,6 +219,7 @@ async function handleMarkAvailable() {
     <MarkSoldDialog
       :open="showMarkSoldDialog"
       :product-id="product.id"
+      :quantity="product.quantity"
       @close="showMarkSoldDialog = false"
       @sold="handleMarkedSold"
     />
