@@ -12,43 +12,60 @@ moderation. Covers the must-have user stories only (see the root README).
 
 ## 2. Database setup (once)
 
-Run this against your local MySQL as an admin user (e.g. `root`):
+Run `db/setup.sql` against your local MySQL as an admin user (e.g. `root`) —
+see the step-by-step guide below. It creates the `cputrade` schema and a
+dedicated `cputrade_app` user. Tables themselves are created automatically the
+first time the app boots (`spring.jpa.hibernate.ddl-auto=update`).
 
-```sql
-CREATE DATABASE cputrade CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'cputrade_app'@'localhost' IDENTIFIED BY 'ChangeMe_StrongPass!';
-GRANT ALL PRIVILEGES ON cputrade.* TO 'cputrade_app'@'localhost';
-FLUSH PRIVILEGES;
-```
+If you use a different password than the one in `db/setup.sql`, update
+`spring.datasource.password` in `src/main/resources/application.properties`
+(or export it as the `SPRING_DATASOURCE_PASSWORD` environment variable instead
+of editing the file).
 
-If you use a different password, update `spring.datasource.password` in
-`src/main/resources/application.properties` (or export it as the
-`SPRING_DATASOURCE_PASSWORD` environment variable instead of editing the file).
+### Step-by-step (Windows, using the `mysql` CLI)
 
-Tables are created automatically on first run (`spring.jpa.hibernate.ddl-auto=update`).
+1. Open a terminal and connect as your MySQL admin user (usually `root`):
+   ```
+   mysql -u root -p
+   ```
+   Enter your MySQL root password when prompted.
+2. Run the setup script from inside the `mysql>` prompt:
+   ```
+   source C:/Users/User1/Downloads/GiftedDev/GiftedDev Projects/CPUTrade/backend/db/setup.sql
+   ```
+   (Adjust the path if your checkout lives elsewhere. On Windows, forward
+   slashes work fine here even though the rest of the path uses backslashes.)
+3. Verify it worked:
+   ```
+   SHOW DATABASES LIKE 'cputrade';
+   SELECT User, Host FROM mysql.user WHERE User = 'cputrade_app';
+   ```
+   Both should return one row.
+4. Exit MySQL: `exit`
+5. Confirm the new user can actually connect:
+   ```
+   mysql -u cputrade_app -p cputrade
+   ```
+   (password: `ChangeMe_StrongPass!`, unless you changed it in the script
+   first). If you get `ERROR 1045 (Access denied)`, the script either didn't
+   run or you're using a different password than what's in
+   `application.properties` — fix one to match the other.
+6. Start the backend once (`./mvnw.cmd spring-boot:run`, see §4 below) so
+   Hibernate creates the `users` and `products` tables. Stop it once it's up
+   and logging normally (Ctrl+C).
+7. Seed an admin account (there's no self-registration path to ADMIN by
+   design):
+   ```
+   mysql -u root -p cputrade < backend/db/seed-admin.sql
+   ```
+   or `source backend/db/seed-admin.sql` from inside a `mysql -u root -p`
+   session. This logs in as **username `admin`, password `Admin123!`** —
+   change the password before this ever runs anywhere but localhost.
+8. Start the backend again — it's now ready to use.
 
-## 3. Seed an admin account (once)
-
-There's no self-registration path to ADMIN by design — insert the first one
-directly. This row logs in as **username `admin`, password `Admin123!`**
-(change the password before this ever runs anywhere but localhost):
-
-```sql
-INSERT INTO users (username, email, campus_handle, password_hash, role, verified, vendor_approved, created_at)
-VALUES (
-  'admin',
-  'admin@cputmarket.ac.za',
-  'admin@cputmarket.ac.za',
-  '$2b$10$l5OcihujLu8354gkqn9v4ehF/J5vH2VG/nR9PazmMc.pRsq1w/R76',
-  'ADMIN',
-  true,
-  true,
-  NOW()
-);
-```
-
-(Run this only after the app has started at least once so the `users` table
-exists.)
+Prefer a GUI? MySQL Workbench works the same way: open a connection as root,
+open `db/setup.sql` as a SQL script and execute it, then (after the app's
+first boot) do the same with `db/seed-admin.sql`.
 
 ## 4. Run it
 

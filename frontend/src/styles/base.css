@@ -40,10 +40,18 @@ img {
 
 /* --- Layout --- */
 .page {
-  /* 375px mobile-first base; a side gutter always present */
+  /* Mobile-first floor is 320px (small phones, e.g. iPhone SE 1st gen) —
+     a side gutter is always present, just narrower below 480px so content
+     has more room on the smallest screens. */
   max-width: 1100px;
   margin: 0 auto;
-  padding: var(--space-4);
+  padding: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  .page {
+    padding: var(--space-4);
+  }
 }
 
 @media (min-width: 768px) {
@@ -258,11 +266,17 @@ img {
   margin-bottom: var(--space-4);
 }
 
-/* --- Product grid: mobile-first, 2/3/4 columns --- */
+/* --- Product grid: mobile-first (320px floor), 2/3/4 columns --- */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-4);
+  gap: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  .product-grid {
+    gap: var(--space-4);
+  }
 }
 
 @media (min-width: 768px) {
