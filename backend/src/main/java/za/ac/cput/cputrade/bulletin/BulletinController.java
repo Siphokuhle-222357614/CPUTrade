@@ -22,13 +22,20 @@ public class BulletinController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BulletinPostResponse>> list() {
-        return ResponseEntity.ok(bulletinService.listAll());
+    public ResponseEntity<List<BulletinPostResponse>> list(@RequestParam(required = false) BulletinType type) {
+        return ResponseEntity.ok(bulletinService.listAll(type));
     }
 
     @PostMapping
     public ResponseEntity<BulletinPostResponse> create(@Valid @RequestBody BulletinPostRequest request, Authentication auth) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bulletinService.create(request, auth));
+    }
+
+    @PatchMapping("/{id}/resolved")
+    public ResponseEntity<BulletinPostResponse> setResolved(
+            @PathVariable Long id, @RequestParam boolean resolved, Authentication auth
+    ) {
+        return ResponseEntity.ok(bulletinService.setResolved(id, resolved, auth));
     }
 
     @DeleteMapping("/{id}")

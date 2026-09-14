@@ -7,4 +7,7 @@ import java.util.List;
 public interface BulletinPostRepository extends JpaRepository<BulletinPost, Long> {
 
     List<BulletinPost> findAllByOrderByCreatedAtDesc();
+
+    /** Powers the Lost & Found filter pills on the board. */
+    List<BulletinPost> findByTypeOrderByCreatedAtDesc(BulletinType type);
 }

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import za.ac.cput.cputrade.bulletin.BulletinPost;
+import za.ac.cput.cputrade.bulletin.BulletinType;
 
 import java.time.LocalDateTime;
 
@@ -16,6 +17,8 @@ public class BulletinPostResponse {
     private String authorUsername;
     private String title;
     private String body;
+    private BulletinType type;
+    private boolean resolved;
     private LocalDateTime createdAt;
 
     public static BulletinPostResponse from(BulletinPost post) {
@@ -25,6 +28,8 @@ public class BulletinPostResponse {
                 .authorUsername(post.getAuthor().getUsername())
                 .title(post.getTitle())
                 .body(post.getBody())
+                .type(post.getType())
+                .resolved(post.isResolved())
                 .createdAt(post.getCreatedAt())
                 .build();
     }

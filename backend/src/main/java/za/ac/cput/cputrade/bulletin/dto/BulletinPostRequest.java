@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import za.ac.cput.cputrade.bulletin.BulletinType;
 
 @Getter
 @Setter
@@ -16,4 +17,7 @@ public class BulletinPostRequest {
     @NotBlank
     @Size(max = 3000)
     private String body;
+
+    /** GENERAL, LOST, or FOUND — defaults to GENERAL when omitted. */
+    private BulletinType type;
 }
