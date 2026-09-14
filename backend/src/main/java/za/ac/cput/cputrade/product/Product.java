@@ -14,9 +14,10 @@ import java.time.LocalDateTime;
 /**
  * A product listing (US2.1, US2.2, US3.1, US6.3).
  *
- * <p>{@code imageBase64} is validated (JPEG/PNG, decoded size &lt;= 500KB) in
- * {@code ProductService} before this entity is ever persisted — the decoded
- * byte length is what's checked, since Base64 inflates size by ~33%.
+ * <p>Photos are validated (JPEG/PNG, decoded size &lt;= 500KB — see
+ * {@code ImageValidator}) and written to disk by {@code ImageStorageService}
+ * before this entity is ever persisted; {@code imageUrl} only ever holds the
+ * resulting URL, never the image bytes themselves.
  */
 @Entity
 @Table(name = "products")
@@ -54,9 +55,8 @@ public class Product {
     @Column(name = "item_condition", nullable = false, length = 20)
     private Condition condition;
 
-    @Lob
-    @Column(name = "image_base64", columnDefinition = "LONGTEXT")
-    private String imageBase64;
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default

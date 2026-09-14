@@ -23,7 +23,7 @@ public class ProductResponse {
     private BigDecimal price;
     private Category category;
     private Condition condition;
-    private String imageBase64;
+    private String imageUrl;
     private boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -45,7 +45,7 @@ public class ProductResponse {
                 .price(product.getPrice())
                 .category(product.getCategory())
                 .condition(product.getCondition())
-                .imageBase64(product.getImageBase64())
+                .imageUrl(product.getImageUrl())
                 .active(product.isActive())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())

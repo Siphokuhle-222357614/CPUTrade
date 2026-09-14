@@ -42,9 +42,15 @@ public final class ImageValidator {
     }
 
     private static boolean isJpegOrPng(byte[] bytes) {
-        if (bytes.length < 4) return false;
-        boolean isJpeg = (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8;
-        boolean isPng = (bytes[0] & 0xFF) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47;
-        return isJpeg || isPng;
+        return isJpeg(bytes) || isPng(bytes);
+    }
+
+    private static boolean isJpeg(byte[] bytes) {
+        return bytes.length >= 2 && (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8;
+    }
+
+    /** Public so {@code ImageStorageService} can pick the right file extension without re-sniffing. */
+    public static boolean isPng(byte[] bytes) {
+        return bytes.length >= 4 && (bytes[0] & 0xFF) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47;
     }
 }

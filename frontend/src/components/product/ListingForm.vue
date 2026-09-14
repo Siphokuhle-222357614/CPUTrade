@@ -22,7 +22,7 @@ const form = reactive({
   price: props.initial?.price ?? "",
   category: props.initial?.category || "TEXTBOOKS",
   condition: props.initial?.condition || "GOOD",
-  imageBase64: props.initial?.imageBase64 || "",
+  imageBase64: "", // only ever holds a *new* upload — see ImageUploadInput
 });
 
 async function handleSubmit() {
@@ -97,7 +97,7 @@ async function handleSubmit() {
         </select>
       </div>
 
-      <ImageUploadInput v-model="form.imageBase64" />
+      <ImageUploadInput v-model="form.imageBase64" :existing-image-url="initial?.imageUrl" />
 
       <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
         {{ loading ? "Saving…" : initial ? "Save Changes" : "Create Listing" }}

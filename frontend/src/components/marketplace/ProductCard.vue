@@ -25,7 +25,7 @@ function formatPrice(price) {
 <template>
   <router-link :to="{ name: 'product-detail', params: { id: product.id } }" class="card product-card">
     <div class="thumb">
-      <img v-if="product.imageBase64" :src="`data:image/jpeg;base64,${product.imageBase64}`" :alt="product.title" />
+      <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.title" />
       <span v-else style="font-size: 32px">📦</span>
     </div>
     <strong>{{ product.title }}</strong>

@@ -12,6 +12,13 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  // The currently-stored image URL, if editing a listing that already has
+  // one. modelValue only ever carries a *new* upload (base64, not yet sent)
+  // — the existing image lives on the server as a file, not in this form.
+  existingImageUrl: {
+    type: String,
+    default: "",
+  },
 });
 const emit = defineEmits(["update:modelValue"]);
 
@@ -62,14 +69,19 @@ function clearImage() {
     <input type="file" accept="image/jpeg,image/png" @change="handleFileChange" />
     <p v-if="error" class="field-error">{{ error }}</p>
     <div v-if="previewBase64" style="margin-top: var(--space-2)">
+      <p class="field-hint">New photo (replaces the current one on save):</p>
       <img
         :src="`data:image/jpeg;base64,${previewBase64}`"
         alt="Preview"
         style="max-width: 160px; border-radius: var(--radius-card)"
       />
       <button type="button" class="btn btn-outline" style="margin-top: var(--space-2)" @click="clearImage">
-        Remove photo
+        Cancel new photo
       </button>
+    </div>
+    <div v-else-if="existingImageUrl" style="margin-top: var(--space-2)">
+      <p class="field-hint">Current photo:</p>
+      <img :src="existingImageUrl" alt="Current" style="max-width: 160px; border-radius: var(--radius-card)" />
     </div>
   </div>
 </template>

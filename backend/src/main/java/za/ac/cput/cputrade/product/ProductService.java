@@ -1,12 +1,12 @@
 package za.ac.cput.cputrade.product;
 
-import za.ac.cput.cputrade.common.ImageValidator;
 import za.ac.cput.cputrade.common.exception.ApiException;
 import za.ac.cput.cputrade.product.dto.ProductCreateRequest;
 import za.ac.cput.cputrade.product.dto.ProductResponse;
 import za.ac.cput.cputrade.product.dto.ProductUpdateRequest;
 import za.ac.cput.cputrade.rating.RatingService;
 import za.ac.cput.cputrade.rating.dto.RatingSummary;
+import za.ac.cput.cputrade.storage.ImageStorageService;
 import za.ac.cput.cputrade.user.Role;
 import za.ac.cput.cputrade.user.User;
 import za.ac.cput.cputrade.user.UserRepository;
@@ -26,11 +26,14 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final RatingService ratingService;
+    private final ImageStorageService imageStorageService;
 
-    public ProductService(ProductRepository productRepository, UserRepository userRepository, RatingService ratingService) {
+    public ProductService(ProductRepository productRepository, UserRepository userRepository,
+                           RatingService ratingService, ImageStorageService imageStorageService) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.ratingService = ratingService;
+        this.imageStorageService = imageStorageService;
     }
 
     /** US3.1 category, US3.2 keyword, US3.3 price range — any combination, all optional. */
@@ -74,10 +77,9 @@ public class ProductService {
             throw ApiException.forbidden("Your vendor account is pending admin approval");
         }
 
-        String decodedImage = null;
+        String imageUrl = null;
         if (request.getImageBase64() != null && !request.getImageBase64().isBlank()) {
-            ImageValidator.validate(request.getImageBase64()); // throws on invalid/oversized/wrong-type
-            decodedImage = request.getImageBase64();
+            imageUrl = imageStorageService.store(request.getImageBase64()); // validates, then writes to disk
         }
 
         Product product = Product.builder()
@@ -87,7 +89,7 @@ public class ProductService {
                 .price(request.getPrice())
                 .category(request.getCategory())
                 .condition(request.getCondition())
-                .imageBase64(decodedImage)
+                .imageUrl(imageUrl)
                 .active(true)
                 .build();
 
@@ -100,8 +102,9 @@ public class ProductService {
         requireOwnerOrAdmin(product, auth);
 
         if (request.getImageBase64() != null && !request.getImageBase64().isBlank()) {
-            ImageValidator.validate(request.getImageBase64());
-            product.setImageBase64(request.getImageBase64());
+            String newImageUrl = imageStorageService.store(request.getImageBase64());
+            imageStorageService.delete(product.getImageUrl()); // clean up the file it's replacing
+            product.setImageUrl(newImageUrl);
         }
 
         product.setTitle(request.getTitle());
@@ -118,6 +121,7 @@ public class ProductService {
         Product product = findByIdOrThrow(id);
         requireOwnerOrAdmin(product, auth);
         productRepository.delete(product);
+        imageStorageService.delete(product.getImageUrl());
     }
 
     /** Public so AdminService can reuse the same rating-aware mapping. */

@@ -33,6 +33,6 @@ public class ProductUpdateRequest {
     @NotNull
     private Condition condition;
 
-    /** Optional: omit to keep the existing image. */
+    /** Optional: omit/blank to keep the existing image; a new value replaces it (old file is deleted). */
     private String imageBase64;
 }

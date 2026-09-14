@@ -1,5 +1,6 @@
 # Backend (Maven / Spring Boot)
 backend/target/
+backend/uploads/
 
 # Frontend (Node / Vite)
 frontend/node_modules/

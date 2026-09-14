@@ -71,11 +71,7 @@ async function handleDelete() {
 <template>
   <div class="card" style="max-width: 640px; margin: 0 auto">
     <div class="thumb" style="aspect-ratio: 16/9; margin-bottom: var(--space-4)">
-      <img
-        v-if="product.imageBase64"
-        :src="`data:image/jpeg;base64,${product.imageBase64}`"
-        :alt="product.title"
-      />
+      <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.title" />
       <span v-else style="font-size: 48px">📦</span>
     </div>
 

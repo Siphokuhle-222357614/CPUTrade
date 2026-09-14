@@ -32,6 +32,11 @@ public class ProductCreateRequest {
     @NotNull
     private Condition condition;
 
-    /** Base64-encoded JPEG/PNG, decoded size capped at 500KB (enforced in ProductService). */
+    /**
+     * Base64-encoded JPEG/PNG, decoded size capped at 500KB. This is the
+     * upload wire format only — {@code ImageStorageService} decodes it,
+     * writes it to disk, and only the resulting URL is ever persisted or
+     * returned.
+     */
     private String imageBase64;
 }
