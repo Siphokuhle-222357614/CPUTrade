@@ -6,6 +6,7 @@ import za.ac.cput.cputrade.profile.dto.PresenceResponse;
 import za.ac.cput.cputrade.profile.dto.PublicProfileResponse;
 import za.ac.cput.cputrade.rating.RatingService;
 import za.ac.cput.cputrade.rating.dto.RatingSummary;
+import za.ac.cput.cputrade.trust.SellerTrust;
 import za.ac.cput.cputrade.user.User;
 import za.ac.cput.cputrade.user.UserRepository;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class UserProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("User not found"));
         RatingSummary rating = ratingService.summarize(userId);
+        long completedSales = productRepository.countBySellerIdAndSoldTrue(userId);
 
         return PublicProfileResponse.builder()
                 .id(user.getId())
@@ -42,7 +44,8 @@ public class UserProfileService {
                 .ratingAverage(rating.average())
                 .ratingCount(rating.count())
                 .activeListingCount(productRepository.countBySellerIdAndActiveTrue(userId))
-                .completedSalesCount(productRepository.countBySellerIdAndSoldTrue(userId))
+                .completedSalesCount(completedSales)
+                .verifiedSeller(SellerTrust.isVerified(completedSales))
                 .online(isOnline(user))
                 .lastActiveAt(user.getLastActiveAt())
                 .build();

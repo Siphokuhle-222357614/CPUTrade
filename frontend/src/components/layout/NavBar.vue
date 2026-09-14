@@ -79,6 +79,7 @@ const initials = computed(() => {
            bar itself doesn't turn into a wall of text links. -->
       <nav class="navbar-links navbar-links-desktop">
         <router-link to="/board">Board</router-link>
+        <router-link v-if="auth.isAuthenticated && !auth.isAdmin" to="/wishlist">Wishlist</router-link>
         <router-link v-if="auth.isAuthenticated" to="/chats">Chats</router-link>
         <router-link v-if="auth.isAdmin" to="/admin">Admin</router-link>
 
@@ -136,6 +137,9 @@ const initials = computed(() => {
         <router-link to="/board" @click="closeMenus">📋 Board</router-link>
         <router-link v-if="auth.isAuthenticated && !auth.isAdmin" to="/dashboard" @click="closeMenus">
           📊 Dashboard
+        </router-link>
+        <router-link v-if="auth.isAuthenticated && !auth.isAdmin" to="/wishlist" @click="closeMenus">
+          ❤️ Wishlist
         </router-link>
         <router-link v-if="auth.isAuthenticated" to="/chats" @click="closeMenus">💬 Chats</router-link>
         <router-link v-if="auth.isAuthenticated" to="/notifications" @click="closeMenus">

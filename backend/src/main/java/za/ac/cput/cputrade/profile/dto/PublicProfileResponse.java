@@ -22,6 +22,8 @@ public class PublicProfileResponse {
     private long activeListingCount;
     /** A trust signal: how many listings this seller has marked as sold. */
     private long completedSalesCount;
+    /** True once completedSalesCount reaches {@code SellerTrust.VERIFIED_SELLER_THRESHOLD}. */
+    private boolean verifiedSeller;
     private boolean online;
     private LocalDateTime lastActiveAt;
 }

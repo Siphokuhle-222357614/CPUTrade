@@ -51,6 +51,12 @@ const routes = [
     meta: { requiresAdmin: true },
   },
   {
+    path: "/wishlist",
+    name: "wishlist",
+    component: () => import("../views/WishlistView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/chats",
     name: "conversations",
     component: () => import("../views/ConversationsView.vue"),

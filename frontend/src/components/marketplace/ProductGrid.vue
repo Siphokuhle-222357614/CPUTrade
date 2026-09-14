@@ -6,6 +6,14 @@ defineProps({
     type: Array,
     required: true,
   },
+  emptyIcon: {
+    type: String,
+    default: "🔍",
+  },
+  emptyMessage: {
+    type: String,
+    default: "No listings here yet — be the first to post one!",
+  },
 });
 </script>
 
@@ -19,7 +27,7 @@ defineProps({
     />
   </div>
   <p v-else class="empty-state">
-    <span class="empty-state-icon" aria-hidden="true">🔍</span>
-    No listings here yet — be the first to post one!
+    <span class="empty-state-icon" aria-hidden="true">{{ emptyIcon }}</span>
+    {{ emptyMessage }}
   </p>
 </template>

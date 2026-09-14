@@ -296,6 +296,10 @@ button.card:hover {
   color: var(--color-primary);
   animation: pop-in 0.4s var(--ease-spring) both;
 }
+.badge-verified {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
 
 /* --- Nav bar ---
    Mobile-first: only the brand + a hamburger show by default; the full

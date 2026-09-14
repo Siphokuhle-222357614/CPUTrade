@@ -3,6 +3,8 @@ package za.ac.cput.cputrade.product;
 import za.ac.cput.cputrade.chat.Conversation;
 import za.ac.cput.cputrade.chat.ConversationRepository;
 import za.ac.cput.cputrade.common.exception.ApiException;
+import za.ac.cput.cputrade.notification.NotificationService;
+import za.ac.cput.cputrade.notification.NotificationType;
 import za.ac.cput.cputrade.product.dto.AddImagesRequest;
 import za.ac.cput.cputrade.product.dto.BuyerSummary;
 import za.ac.cput.cputrade.product.dto.MarkSoldRequest;
@@ -39,15 +41,20 @@ public class ProductService {
     private final ConversationRepository conversationRepository;
     private final RatingService ratingService;
     private final ImageStorageService imageStorageService;
+    private final WishlistItemRepository wishlistItemRepository;
+    private final NotificationService notificationService;
 
     public ProductService(ProductRepository productRepository, UserRepository userRepository,
                            ConversationRepository conversationRepository, RatingService ratingService,
-                           ImageStorageService imageStorageService) {
+                           ImageStorageService imageStorageService, WishlistItemRepository wishlistItemRepository,
+                           NotificationService notificationService) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.conversationRepository = conversationRepository;
         this.ratingService = ratingService;
         this.imageStorageService = imageStorageService;
+        this.wishlistItemRepository = wishlistItemRepository;
+        this.notificationService = notificationService;
     }
 
     /** US3.1 category, US3.2 keyword, US3.3 price range — any combination, all optional. */
@@ -125,6 +132,7 @@ public class ProductService {
         Product product = findByIdOrThrow(id);
         requireOwnerOrAdmin(product, auth);
 
+        BigDecimal previousPrice = product.getPrice();
         product.setTitle(request.getTitle());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
@@ -132,7 +140,12 @@ public class ProductService {
         product.setCondition(request.getCondition());
         product.setQuantity(request.getQuantity());
 
-        return toResponse(productRepository.save(product));
+        Product saved = productRepository.save(product);
+        if (previousPrice != null && request.getPrice().compareTo(previousPrice) < 0) {
+            notifyWishlisters(saved, NotificationType.PRICE_DROP,
+                    "Price drop! \"" + saved.getTitle() + "\" is now R" + saved.getPrice() + " (was R" + previousPrice + ")");
+        }
+        return toResponse(saved);
     }
 
     /** Appends new photos (owner/admin), up to the per-listing cap. */
@@ -202,7 +215,10 @@ public class ProductService {
         product.setSold(true);
         product.setSoldAt(LocalDateTime.now());
         product.setSoldTo(soldTo);
-        return toResponse(productRepository.save(product));
+        Product saved = productRepository.save(product);
+        notifyWishlisters(saved, NotificationType.WISHLIST_ITEM_SOLD,
+                "\"" + saved.getTitle() + "\" was just sold — better luck with the next one!");
+        return toResponse(saved);
     }
 
     /** Undo a mistaken "mark as sold" (owner/admin) — puts the listing back in marketplace search. */
@@ -221,6 +237,8 @@ public class ProductService {
     public void delete(Long id, Authentication auth) {
         Product product = findByIdOrThrow(id);
         requireOwnerOrAdmin(product, auth);
+        // Must go before the product row itself — wishlist_items.product_id is a NOT NULL FK.
+        wishlistItemRepository.deleteByProductId(id);
         productRepository.delete(product);
         for (String imageUrl : product.getImageUrls()) {
             imageStorageService.delete(imageUrl);
@@ -230,7 +248,16 @@ public class ProductService {
     /** Public so AdminService can reuse the same rating-aware mapping. */
     public ProductResponse toResponse(Product product) {
         RatingSummary sellerRating = ratingService.summarize(product.getSeller().getId());
-        return ProductResponse.from(product, sellerRating);
+        long sellerCompletedSales = productRepository.countBySellerIdAndSoldTrue(product.getSeller().getId());
+        long watcherCount = wishlistItemRepository.countByProductId(product.getId());
+        return ProductResponse.from(product, sellerRating, sellerCompletedSales, watcherCount);
+    }
+
+    /** Notifies everyone watching this listing, except the seller themselves (can't wishlist your own listing anyway). */
+    private void notifyWishlisters(Product product, NotificationType type, String message) {
+        for (WishlistItem item : wishlistItemRepository.findByProductId(product.getId())) {
+            notificationService.create(item.getUser(), type, message, "/products/" + product.getId());
+        }
     }
 
     private List<String> storeAll(List<String> base64Images) {

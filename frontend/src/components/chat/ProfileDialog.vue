@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import Modal from "../common/Modal.vue";
+import VerifiedSellerBadge from "../product/VerifiedSellerBadge.vue";
 import { getPublicProfile } from "../../api/profile";
 import { formatDateTime } from "../../utils/datetime";
 
@@ -52,6 +53,7 @@ watch(
           {{ profile.online ? "🟢 Online" : "⚪ Offline" }}
         </span>
         <span class="badge badge-condition">{{ profile.role }}</span>
+        <VerifiedSellerBadge :verified="profile.verifiedSeller" />
       </p>
       <p class="field-hint">{{ profile.campusHandle }}</p>
       <div class="table-list" style="margin-top: var(--space-3)">

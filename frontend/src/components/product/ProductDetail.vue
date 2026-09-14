@@ -5,6 +5,8 @@ import { useAuthStore } from "../../stores/auth";
 import { deleteProduct, markAvailable } from "../../api/products";
 import { startConversation } from "../../api/chat";
 import SellerRatingBadge from "./SellerRatingBadge.vue";
+import VerifiedSellerBadge from "./VerifiedSellerBadge.vue";
+import WishlistButton from "./WishlistButton.vue";
 import RatingForm from "./RatingForm.vue";
 import MarkSoldDialog from "./MarkSoldDialog.vue";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
@@ -145,6 +147,7 @@ async function handleMarkAvailable() {
     <div class="row">
       <h1 style="margin: 0">{{ formatPrice(product.price) }}</h1>
       <span class="badge badge-condition">{{ conditionLabels[product.condition] || product.condition }}</span>
+      <WishlistButton :product="product" size="lg" />
     </div>
     <span v-if="product.freecycle" class="badge badge-free" style="margin-top: var(--space-2)">♻️ Freecycle</span>
 
@@ -153,7 +156,9 @@ async function handleMarkAvailable() {
     <p class="field-hint">
       Sold by {{ product.sellerUsername }} ·
       <SellerRatingBadge :average="product.sellerRatingAverage" :count="product.sellerRatingCount" />
+      <VerifiedSellerBadge :verified="product.sellerVerified" />
       · {{ product.viewCount }} view{{ product.viewCount === 1 ? "" : "s" }}
+      <template v-if="product.watcherCount > 0"> · 👀 {{ product.watcherCount }} watching</template>
     </p>
     <p v-if="!product.sold && product.quantity > 1" class="field-hint">{{ product.quantity }} available</p>
     <p v-if="product.sold" class="field-hint">

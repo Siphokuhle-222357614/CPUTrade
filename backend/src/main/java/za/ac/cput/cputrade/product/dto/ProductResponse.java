@@ -41,12 +41,16 @@ public class ProductResponse {
     /** Null when the seller has no ratings yet (US6.1). */
     private Double sellerRatingAverage;
     private long sellerRatingCount;
+    /** True once the seller has completed enough sales — see {@code SellerTrust}. */
+    private boolean sellerVerified;
     /** US2.4: how many times this listing's detail page has been opened. */
     private long viewCount;
     /** US2.3: true when price is exactly 0 — shown as a "Freecycle" badge. */
     private boolean freecycle;
+    /** How many students currently have this listing on their wishlist — a live social-proof signal. */
+    private long watcherCount;
 
-    public static ProductResponse from(Product product, RatingSummary sellerRating) {
+    public static ProductResponse from(Product product, RatingSummary sellerRating, long sellerCompletedSales, long watcherCount) {
         List<String> images = product.getImageUrls() != null ? product.getImageUrls() : List.of();
         return ProductResponse.builder()
                 .id(product.getId())
@@ -68,8 +72,10 @@ public class ProductResponse {
                 .updatedAt(product.getUpdatedAt())
                 .sellerRatingAverage(sellerRating.average())
                 .sellerRatingCount(sellerRating.count())
+                .sellerVerified(za.ac.cput.cputrade.trust.SellerTrust.isVerified(sellerCompletedSales))
                 .viewCount(product.getViewCount())
                 .freecycle(product.getPrice() != null && product.getPrice().signum() == 0)
+                .watcherCount(watcherCount)
                 .build();
     }
 }

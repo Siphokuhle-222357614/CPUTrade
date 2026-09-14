@@ -1,10 +1,29 @@
 <script setup>
+import { watch } from "vue";
 import { useRoute } from "vue-router";
 import NavBar from "./components/layout/NavBar.vue";
 import InstallPrompt from "./components/layout/InstallPrompt.vue";
 import ToastContainer from "./components/common/ToastContainer.vue";
+import { useAuthStore } from "./stores/auth";
+import { useWishlistStore } from "./stores/wishlist";
 
 const route = useRoute();
+const auth = useAuthStore();
+const wishlist = useWishlistStore();
+
+// Wishlist state is per-user -- load it in on login, and drop it on logout so
+// the next person to use this tab/browser doesn't inherit someone else's hearts.
+watch(
+  () => auth.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated) {
+      wishlist.load();
+    } else {
+      wishlist.clear();
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>

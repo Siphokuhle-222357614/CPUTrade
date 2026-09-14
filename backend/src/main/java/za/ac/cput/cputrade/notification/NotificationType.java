@@ -4,5 +4,9 @@ package za.ac.cput.cputrade.notification;
 public enum NotificationType {
     VENDOR_APPROVED,
     LISTING_REMOVED,
-    NEW_MESSAGE
+    NEW_MESSAGE,
+    /** A listing on the recipient's wishlist just got cheaper. */
+    PRICE_DROP,
+    /** A listing on the recipient's wishlist was marked sold by someone else. */
+    WISHLIST_ITEM_SOLD
 }
