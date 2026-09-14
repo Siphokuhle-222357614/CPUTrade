@@ -9,4 +9,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     /** Admin moderation view — includes inactive listings (US6.3). */
     List<Product> findAllByOrderByCreatedAtDesc();
+
+    /** A seller's own "My Listings" / business dashboard view — includes their own inactive listings too. */
+    List<Product> findBySellerIdOrderByCreatedAtDesc(Long sellerId);
 }

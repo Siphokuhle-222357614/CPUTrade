@@ -15,4 +15,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /** Admin's pending vendor-request queue (US1.5) — no separate table needed. */
     List<User> findByRoleAndVendorApprovedFalse(Role role);
+
+    List<User> findByAccountStatusOrderByCreatedAtDesc(AccountStatus accountStatus);
 }

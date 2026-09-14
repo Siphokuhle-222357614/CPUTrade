@@ -8,9 +8,20 @@ const routes = [
     component: () => import("../views/LoginRegisterView.vue"),
   },
   {
+    path: "/appeal",
+    name: "appeal",
+    component: () => import("../views/AppealView.vue"),
+  },
+  {
     path: "/",
     name: "marketplace",
     component: () => import("../views/MarketplaceView.vue"),
+  },
+  {
+    path: "/dashboard",
+    name: "dashboard",
+    component: () => import("../views/DashboardView.vue"),
+    meta: { requiresAuth: true },
   },
   {
     path: "/products/new",

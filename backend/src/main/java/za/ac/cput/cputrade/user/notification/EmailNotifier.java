@@ -18,4 +18,8 @@ public interface EmailNotifier {
     void sendVendorApprovalEmail(User user);
 
     void sendListingRemovedEmail(User seller, Product product);
+
+    void sendAccountSuspendedEmail(User user, String reason);
+
+    void sendAccountReactivatedEmail(User user);
 }

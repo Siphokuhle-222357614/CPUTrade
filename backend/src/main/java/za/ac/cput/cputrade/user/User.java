@@ -64,6 +64,31 @@ public class User {
     @Builder.Default
     private boolean vendorApproved = false;
 
+    /**
+     * Admin can suspend an account (typically escalating from a report) —
+     * a suspended user can't log in at all, and any still-valid JWT they're
+     * already holding is rejected on the next request too (see
+     * {@code AccountStatusFilter}), so suspension takes effect immediately
+     * rather than waiting out the token's remaining expiry.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_status", nullable = false, length = 20)
+    @Builder.Default
+    private AccountStatus accountStatus = AccountStatus.ACTIVE;
+
+    /** Why the account was suspended — shown to the user so they know what to appeal. */
+    @Column(name = "suspension_reason", length = 500)
+    private String suspensionReason;
+
+    /**
+     * Optional: if set, the suspension lifts on its own the next time this
+     * user logs in after this moment — no appeal needed. Null means the
+     * suspension is indefinite until an admin reactivates it or an appeal
+     * is approved.
+     */
+    @Column(name = "suspended_until")
+    private LocalDateTime suspendedUntil;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

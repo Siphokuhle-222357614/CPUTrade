@@ -11,6 +11,7 @@ const mode = ref("login"); // "login" | "register"
 const loading = ref(false);
 const errorMessage = ref("");
 const infoMessage = ref("");
+const isSuspended = ref(false);
 
 const form = reactive({
   username: "",
@@ -22,6 +23,7 @@ const form = reactive({
 function resetMessages() {
   errorMessage.value = "";
   infoMessage.value = "";
+  isSuspended.value = false;
 }
 
 async function handleSubmit() {
@@ -47,6 +49,7 @@ async function handleSubmit() {
   } catch (err) {
     errorMessage.value =
       err.response?.data?.message || "Something went wrong — please try again.";
+    isSuspended.value = err.response?.status === 403 && errorMessage.value.toLowerCase().includes("suspended");
   } finally {
     loading.value = false;
   }
@@ -76,7 +79,12 @@ async function handleSubmit() {
       </button>
     </div>
 
-    <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="alert alert-error">
+      {{ errorMessage }}
+      <router-link v-if="isSuspended" :to="{ name: 'appeal', query: { username: form.username } }" style="color: inherit; font-weight: 700">
+        Submit an appeal →
+      </router-link>
+    </p>
     <p v-if="infoMessage" class="alert alert-info">{{ infoMessage }}</p>
 
     <form @submit.prevent="handleSubmit">

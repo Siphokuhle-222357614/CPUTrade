@@ -32,6 +32,12 @@ public class ProductController {
         return ResponseEntity.ok(productService.search(category, keyword, minPrice, maxPrice));
     }
 
+    /** The current user's own business dashboard — every listing they own, active or not. Must come before /{id}. */
+    @GetMapping("/mine")
+    public ResponseEntity<List<ProductResponse>> listMine(Authentication auth) {
+        return ResponseEntity.ok(productService.listMine(auth));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getOne(@PathVariable Long id) {
         return ResponseEntity.ok(productService.getActiveById(id));

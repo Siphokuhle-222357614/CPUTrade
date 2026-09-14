@@ -1,5 +1,6 @@
 package za.ac.cput.cputrade.config;
 
+import za.ac.cput.cputrade.security.AccountStatusFilter;
 import za.ac.cput.cputrade.security.JwtAccessDeniedHandler;
 import za.ac.cput.cputrade.security.JwtAuthEntryPoint;
 import za.ac.cput.cputrade.security.JwtAuthFilter;
@@ -40,13 +41,16 @@ public class SecurityConfig {
     private String allowedOrigin;
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final AccountStatusFilter accountStatusFilter;
     private final JwtAuthEntryPoint jwtAuthEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final UserDetailsService userDetailsService;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter, JwtAuthEntryPoint jwtAuthEntryPoint,
-                           JwtAccessDeniedHandler jwtAccessDeniedHandler, UserDetailsService userDetailsService) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, AccountStatusFilter accountStatusFilter,
+                           JwtAuthEntryPoint jwtAuthEntryPoint, JwtAccessDeniedHandler jwtAccessDeniedHandler,
+                           UserDetailsService userDetailsService) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.accountStatusFilter = accountStatusFilter;
         this.jwtAuthEntryPoint = jwtAuthEntryPoint;
         this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
         this.userDetailsService = userDetailsService;
@@ -91,14 +95,19 @@ public class SecurityConfig {
                         .accessDeniedHandler(jwtAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        // Must precede the broader GET /api/products/** permitAll rule below —
+                        // Spring Security uses the first matching rule, and /mine needs auth.
+                        .requestMatchers(HttpMethod.GET, "/api/products/mine").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/bulletin/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/appeals").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(accountStatusFilter, JwtAuthFilter.class);
 
         return http.build();
     }

@@ -4,7 +4,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,10 +26,20 @@ import java.util.List;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    /** Paths that never carry a token — skip filter work entirely. */
+    /**
+     * Paths that never carry a token — skip filter work entirely.
+     *
+     * <p>Deliberately does NOT include "GET /api/products/**" even though
+     * that's publicly readable in SecurityConfig: /api/products/mine sits
+     * under that same prefix but requires authentication, and skipping this
+     * filter for it meant its Authorization header was never parsed, so it
+     * always 401'd no matter what token was sent. The body below already
+     * no-ops safely when no Authorization header is present, so there's no
+     * correctness reason to special-case public GETs here — only auth
+     * endpoints, which genuinely never carry a token, still need to.
+     */
     private static final List<RequestMatcher> PUBLIC_MATCHERS = List.of(
-            PathPatternRequestMatcher.pathPattern("/api/auth/**"),
-            PathPatternRequestMatcher.pathPattern(HttpMethod.GET, "/api/products/**")
+            PathPatternRequestMatcher.pathPattern("/api/auth/**")
     );
 
     private final JwtUtil jwtUtil;

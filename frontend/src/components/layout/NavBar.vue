@@ -45,6 +45,7 @@ watch(() => router.currentRoute.value.name, (name) => {
     <router-link to="/" class="brand">🛒 CPUTrade</router-link>
     <nav class="navbar-links">
       <router-link to="/board">Board</router-link>
+      <router-link v-if="auth.isAuthenticated" to="/dashboard">Dashboard</router-link>
       <router-link v-if="auth.isAuthenticated" to="/products/new" class="btn btn-accent">
         + Sell
       </router-link>

@@ -28,13 +28,15 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final EmailNotifier emailNotifier;
+    private final AccountStatusService accountStatusService;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                        JwtUtil jwtUtil, EmailNotifier emailNotifier) {
+                        JwtUtil jwtUtil, EmailNotifier emailNotifier, AccountStatusService accountStatusService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.emailNotifier = emailNotifier;
+        this.accountStatusService = accountStatusService;
     }
 
     @Transactional
@@ -75,6 +77,14 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw ApiException.unauthorized("Invalid username or password");
+        }
+
+        user = accountStatusService.resolveStatus(user); // lifts an expired timed suspension first
+        if (user.getAccountStatus() == AccountStatus.SUSPENDED) {
+            String reasonSuffix = user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() + "." : ".";
+            throw ApiException.forbidden(
+                    "Your account has been suspended" + reasonSuffix
+                            + " If you believe this is a mistake, submit an appeal.");
         }
 
         String token = jwtUtil.generateToken(user.getUsername());

@@ -1,6 +1,8 @@
 package za.ac.cput.cputrade.admin;
 
+import jakarta.validation.Valid;
 import za.ac.cput.cputrade.product.dto.ProductResponse;
+import za.ac.cput.cputrade.user.dto.SuspendUserRequest;
 import za.ac.cput.cputrade.user.dto.UserSummaryDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,5 +38,20 @@ public class AdminController {
     @PatchMapping("/listings/{id}/deactivate")
     public ResponseEntity<ProductResponse> deactivateListing(@PathVariable Long id) {
         return ResponseEntity.ok(adminService.deactivateListing(id));
+    }
+
+    @PostMapping("/users/{userId}/suspend")
+    public ResponseEntity<UserSummaryDto> suspendUser(@PathVariable Long userId, @Valid @RequestBody SuspendUserRequest request) {
+        return ResponseEntity.ok(adminService.suspendUser(userId, request));
+    }
+
+    @PostMapping("/users/{userId}/reactivate")
+    public ResponseEntity<UserSummaryDto> reactivateUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(adminService.reactivateUser(userId));
+    }
+
+    @GetMapping("/users/suspended")
+    public ResponseEntity<List<UserSummaryDto>> suspendedUsers() {
+        return ResponseEntity.ok(adminService.suspendedUsers());
     }
 }

@@ -30,4 +30,15 @@ public class NoOpEmailNotifier implements EmailNotifier {
         log.info("[stub email] Listing-removed email would be sent to {} about product #{} ({})",
                 seller.getEmail(), product.getId(), product.getTitle());
     }
+
+    @Override
+    public void sendAccountSuspendedEmail(User user, String reason) {
+        log.info("[stub email] Account-suspended email would be sent to {} ({}). Reason: {}",
+                user.getEmail(), user.getUsername(), reason);
+    }
+
+    @Override
+    public void sendAccountReactivatedEmail(User user) {
+        log.info("[stub email] Account-reactivated email would be sent to {} ({})", user.getEmail(), user.getUsername());
+    }
 }

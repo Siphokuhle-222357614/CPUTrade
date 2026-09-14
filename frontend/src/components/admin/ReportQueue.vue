@@ -1,11 +1,13 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { ref, onMounted } from "vue";
 import { dismissReport, listReports, reviewReport } from "../../api/reports";
+import SuspendUserDialog from "./SuspendUserDialog.vue";
 
 const reports = ref([]);
 const loading = ref(true);
 const errorMessage = ref("");
 const actingId = ref(null);
+const suspendTarget = ref(null); // { reportId, userId, username } | null
 
 const reasonLabels = {
   SCAM: "🚨 Scam / fraud",
@@ -40,6 +42,13 @@ async function handleAction(id, action) {
   }
 }
 
+function handleSuspended() {
+  // Suspending is the resolution — mark the report reviewed too so it drops off the queue.
+  const reportId = suspendTarget.value.reportId;
+  suspendTarget.value = null;
+  handleAction(reportId, reviewReport);
+}
+
 function formatDate(value) {
   return new Date(value).toLocaleString();
 }
@@ -66,7 +75,7 @@ onMounted(load);
             {{ report.reportedProductTitle }}
           </router-link>
           <span v-else>—</span>
-          (seller: {{ report.reportedUsername || "—" }})
+          (user: {{ report.reportedUsername || "—" }})
         </p>
         <p v-if="report.details" class="field-hint">"{{ report.details }}"</p>
         <p class="field-hint">Filed by {{ report.reporterUsername }}</p>
@@ -80,6 +89,15 @@ onMounted(load);
             Dismiss
           </button>
           <button
+            v-if="report.reportedUserId"
+            type="button"
+            class="btn btn-danger"
+            :disabled="actingId === report.id"
+            @click="suspendTarget = { reportId: report.id, userId: report.reportedUserId, username: report.reportedUsername }"
+          >
+            🚫 Suspend User
+          </button>
+          <button
             type="button"
             class="btn btn-primary"
             :disabled="actingId === report.id"
@@ -90,5 +108,13 @@ onMounted(load);
         </div>
       </div>
     </div>
+
+    <SuspendUserDialog
+      :open="suspendTarget !== null"
+      :user-id="suspendTarget?.userId"
+      :username="suspendTarget?.username"
+      @close="suspendTarget = null"
+      @suspended="handleSuspended"
+    />
   </div>
 </template>

@@ -7,9 +7,11 @@ import za.ac.cput.cputrade.product.Product;
 import za.ac.cput.cputrade.product.ProductRepository;
 import za.ac.cput.cputrade.product.ProductService;
 import za.ac.cput.cputrade.product.dto.ProductResponse;
+import za.ac.cput.cputrade.user.AccountStatus;
 import za.ac.cput.cputrade.user.Role;
 import za.ac.cput.cputrade.user.User;
 import za.ac.cput.cputrade.user.UserRepository;
+import za.ac.cput.cputrade.user.dto.SuspendUserRequest;
 import za.ac.cput.cputrade.user.dto.UserSummaryDto;
 import za.ac.cput.cputrade.user.notification.EmailNotifier;
 import org.springframework.stereotype.Service;
@@ -76,5 +78,45 @@ public class AdminService {
         notificationService.create(product.getSeller(), NotificationType.LISTING_REMOVED,
                 "Your listing \"" + product.getTitle() + "\" was removed by an admin.", null);
         return productService.toResponse(saved);
+    }
+
+    /**
+     * Suspends a user's account — typically escalating from a report. They
+     * can't log in (and any still-valid JWT is rejected on the next request
+     * too — see {@code AccountStatusFilter}) until an admin reactivates them
+     * directly, an appeal is approved, or an optional {@code suspendedUntil}
+     * time passes.
+     */
+    @Transactional
+    public UserSummaryDto suspendUser(Long userId, SuspendUserRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> ApiException.notFound("User not found"));
+        if (user.getRole() == Role.ADMIN) {
+            throw ApiException.badRequest("Cannot suspend an admin account");
+        }
+        user.setAccountStatus(AccountStatus.SUSPENDED);
+        user.setSuspensionReason(request.getReason());
+        user.setSuspendedUntil(request.getSuspendedUntil());
+        User saved = userRepository.save(user);
+        emailNotifier.sendAccountSuspendedEmail(saved, request.getReason());
+        return UserSummaryDto.from(saved);
+    }
+
+    @Transactional
+    public UserSummaryDto reactivateUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> ApiException.notFound("User not found"));
+        user.setAccountStatus(AccountStatus.ACTIVE);
+        user.setSuspendedUntil(null);
+        user.setSuspensionReason(null);
+        User saved = userRepository.save(user);
+        emailNotifier.sendAccountReactivatedEmail(saved);
+        return UserSummaryDto.from(saved);
+    }
+
+    public List<UserSummaryDto> suspendedUsers() {
+        return userRepository.findByAccountStatusOrderByCreatedAtDesc(AccountStatus.SUSPENDED).stream()
+                .map(UserSummaryDto::from)
+                .toList();
     }
 }

@@ -58,6 +58,14 @@ public class ProductService {
         return products.stream().map(this::toResponse).toList();
     }
 
+    /** A seller's business dashboard — every listing they own, active or not, newest first. */
+    public List<ProductResponse> listMine(Authentication auth) {
+        User seller = currentUser(auth);
+        return productRepository.findBySellerIdOrderByCreatedAtDesc(seller.getId()).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     @Transactional
     public ProductResponse getActiveById(Long id) {
         Product product = productRepository.findById(id)

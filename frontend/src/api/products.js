@@ -13,6 +13,11 @@ export function getProduct(id) {
   return client.get(`/products/${id}`);
 }
 
+/** The current user's business dashboard — every listing they own, active or not. */
+export function listMyProducts() {
+  return client.get("/products/mine");
+}
+
 export function createProduct(payload) {
   return client.post("/products", payload);
 }
