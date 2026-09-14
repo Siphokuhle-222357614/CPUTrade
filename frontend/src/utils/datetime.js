@@ -38,6 +38,20 @@ export function formatTime(value) {
   return match ? `${match[1]}:${match[2]}` : "";
 }
 
+/**
+ * "last seen today at 16:45" / "last seen yesterday at 09:12" /
+ * "last seen 3 September 2026" — recent activity gets a time, anything
+ * older than yesterday just gets a date, chat-app style.
+ */
+export function formatLastSeen(value) {
+  if (!value) return "";
+  const day = formatDayLabel(value);
+  const time = formatTime(value);
+  if (day === "Today") return `last seen today at ${time}`;
+  if (day === "Yesterday") return `last seen yesterday at ${time}`;
+  return `last seen ${day}`;
+}
+
 /** The "2026-09-14" portion, used to group messages by day. */
 export function dateKey(value) {
   return (value || "").slice(0, 10);

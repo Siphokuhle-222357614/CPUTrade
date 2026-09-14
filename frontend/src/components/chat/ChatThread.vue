@@ -16,7 +16,7 @@ import { getPresence } from "../../api/profile";
 import ReportDialog from "../trust/ReportDialog.vue";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
 import ProfileDialog from "./ProfileDialog.vue";
-import { dateKey, formatDayLabel, formatTime } from "../../utils/datetime";
+import { dateKey, formatDayLabel, formatLastSeen, formatTime } from "../../utils/datetime";
 import { playMessageSound } from "../../utils/sound";
 
 const props = defineProps({
@@ -34,6 +34,7 @@ const sending = ref(false);
 const errorMessage = ref("");
 const isBlocked = ref(false);
 const otherOnline = ref(false);
+const otherLastActiveAt = ref(null);
 const otherTyping = ref(false);
 
 const showReportDialog = ref(false);
@@ -42,6 +43,7 @@ const showProfileDialog = ref(false);
 const editingId = ref(null);
 const editBody = ref("");
 const deleteTargetId = ref(null);
+const openMenuId = ref(null); // which message's ⋮ dropdown is open, if any
 
 const form = reactive({ body: "", locationSuggestion: "" });
 
@@ -74,11 +76,13 @@ const timeline = computed(() => {
   return rows;
 });
 
+// WhatsApp convention: one check = sent only; two checks = delivered to
+// their device but not opened; two checks in blue = they opened the chat.
 function tickFor(message) {
   if (message.senderId !== auth.user?.id) return null;
-  if (message.readAt) return { glyph: "✓✓", seen: true };
-  if (message.deliveredAt) return { glyph: "✓✓", seen: false };
-  return { glyph: "✓", seen: false };
+  if (message.readAt) return { glyph: "✓✓", cssClass: "tick-seen" };
+  if (message.deliveredAt) return { glyph: "✓✓", cssClass: "tick-delivered" };
+  return { glyph: "✓", cssClass: "tick-sent" };
 }
 
 let messagesPollTimer = null;
@@ -136,6 +140,7 @@ async function refreshPresence() {
   try {
     const { data } = await getPresence(otherUser.value.id);
     otherOnline.value = data.online;
+    otherLastActiveAt.value = data.lastActiveAt;
   } catch (err) {
     // ignore
   }
@@ -169,8 +174,14 @@ async function handleSend() {
 }
 
 function startEdit(message) {
+  openMenuId.value = null;
   editingId.value = message.id;
   editBody.value = message.body;
+}
+
+function startDelete(messageId) {
+  openMenuId.value = null;
+  deleteTargetId.value = messageId;
 }
 
 function cancelEdit() {
@@ -204,6 +215,16 @@ async function confirmDelete() {
   }
 }
 
+function toggleMenu(messageId) {
+  openMenuId.value = openMenuId.value === messageId ? null : messageId;
+}
+
+function closeMenuOnOutsideClick(event) {
+  if (!event.target.closest(".chat-message-menu-wrap")) {
+    openMenuId.value = null;
+  }
+}
+
 async function handleBlockConfirm() {
   showBlockConfirm.value = false;
   if (!otherUser.value) return;
@@ -230,23 +251,26 @@ onMounted(async () => {
   refreshPresence();
   messagesPollTimer = setInterval(refreshMessages, 4000);
   typingPollTimer = setInterval(refreshTyping, 2500);
-  presencePollTimer = setInterval(refreshPresence, 15000);
+  presencePollTimer = setInterval(refreshPresence, 8000);
+  document.addEventListener("click", closeMenuOnOutsideClick);
 });
 
 onBeforeUnmount(() => {
   clearInterval(messagesPollTimer);
   clearInterval(typingPollTimer);
   clearInterval(presencePollTimer);
+  document.removeEventListener("click", closeMenuOnOutsideClick);
 });
 </script>
 
 <template>
   <div class="card">
     <div v-if="otherUser" class="row" style="margin-bottom: var(--space-3)">
-      <button type="button" class="btn btn-outline" style="border: none; padding: 0; background: none" @click="showProfileDialog = true">
+      <button type="button" class="chat-header-btn" @click="showProfileDialog = true">
         <strong>{{ otherUser.username }}</strong>
-        <span v-if="otherOnline" class="badge badge-success" style="margin-left: var(--space-2)">🟢 Online</span>
-        <span v-else class="badge badge-condition" style="margin-left: var(--space-2)">⚪ Offline</span>
+        <span v-if="otherOnline" class="field-hint" style="color: var(--color-success)">🟢 Online</span>
+        <span v-else-if="otherLastActiveAt" class="field-hint">⚪ {{ formatLastSeen(otherLastActiveAt) }}</span>
+        <span v-else class="field-hint">⚪ Offline</span>
       </button>
       <span class="row" style="gap: var(--space-2); width: auto">
         <button type="button" class="btn btn-outline" @click="showReportDialog = true">🚩 Report</button>
@@ -272,6 +296,7 @@ onBeforeUnmount(() => {
 
         <div
           v-else
+          class="chat-message-wrapper"
           :style="{
             alignSelf: row.message.senderId === auth.user?.id ? 'flex-end' : 'flex-start',
             maxWidth: '80%',
@@ -279,11 +304,23 @@ onBeforeUnmount(() => {
         >
           <div
             class="card chat-bubble"
-            :style="{
-              background: row.message.senderId === auth.user?.id ? 'var(--color-primary)' : 'var(--color-bg)',
-              color: row.message.senderId === auth.user?.id ? '#fff' : 'var(--color-text)',
-            }"
+            :class="{ 'chat-bubble-own': row.message.senderId === auth.user?.id }"
           >
+            <!-- WhatsApp-style: hidden until hover/tap, or while its menu is open -->
+            <div
+              v-if="row.message.senderId === auth.user?.id && !row.message.deleted && editingId !== row.message.id"
+              class="chat-message-menu-wrap"
+              :class="{ 'chat-message-menu-open': openMenuId === row.message.id }"
+            >
+              <button type="button" class="chat-kebab" aria-label="Message options" @click.stop="toggleMenu(row.message.id)">
+                ⋮
+              </button>
+              <div v-if="openMenuId === row.message.id" class="chat-message-menu">
+                <button type="button" @click="startEdit(row.message)">✏️ Edit</button>
+                <button type="button" @click="startDelete(row.message.id)">🗑️ Delete</button>
+              </div>
+            </div>
+
             <template v-if="editingId === row.message.id">
               <textarea v-model="editBody" rows="2" style="width: 100%; color: var(--color-text)"></textarea>
               <div class="row" style="justify-content: flex-end; margin-top: var(--space-1)">
@@ -306,22 +343,10 @@ onBeforeUnmount(() => {
                 {{ formatTime(row.message.createdAt) }}
                 <span v-if="row.message.edited && !row.message.deleted"> · edited</span>
               </span>
-              <span
-                v-if="tickFor(row.message)"
-                :style="{ color: tickFor(row.message).seen ? 'var(--color-primary-light)' : 'inherit' }"
-              >
+              <span v-if="tickFor(row.message)" class="chat-tick" :class="tickFor(row.message).cssClass">
                 {{ tickFor(row.message).glyph }}
               </span>
             </div>
-          </div>
-
-          <div
-            v-if="row.message.senderId === auth.user?.id && !row.message.deleted && editingId !== row.message.id"
-            class="row"
-            style="justify-content: flex-end; gap: var(--space-2); margin-top: 2px"
-          >
-            <button type="button" class="chat-inline-action" @click="startEdit(row.message)">Edit</button>
-            <button type="button" class="chat-inline-action" @click="deleteTargetId = row.message.id">Delete</button>
           </div>
         </div>
       </template>
@@ -389,6 +414,21 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.chat-header-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  color: var(--color-text);
+}
+.chat-header-btn:hover strong {
+  text-decoration: underline;
+}
+
 .chat-day-divider {
   display: flex;
   justify-content: center;
@@ -403,26 +443,92 @@ onBeforeUnmount(() => {
   color: var(--color-text-muted);
   font-weight: 600;
 }
+
+.chat-message-wrapper {
+  position: relative;
+}
 .chat-bubble {
   padding: var(--space-2) var(--space-3);
+  position: relative;
 }
+.chat-bubble-own {
+  background: var(--color-primary);
+  color: #fff;
+}
+.chat-bubble:not(.chat-bubble-own) {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
 .chat-bubble-meta {
   justify-content: flex-end;
   gap: 4px;
   font-size: 10px;
-  opacity: 0.75;
+  opacity: 0.85;
   margin-top: 2px;
 }
-.chat-inline-action {
+
+/* Read-receipt ticks — grey for sent/delivered, a clearly distinct blue once seen. */
+.chat-tick {
+  font-weight: 700;
+  letter-spacing: -1.5px;
+}
+.tick-sent,
+.tick-delivered {
+  color: rgba(255, 255, 255, 0.65);
+}
+.tick-seen {
+  color: #53bdeb;
+}
+
+/* WhatsApp-style: the ⋮ trigger stays hidden until the message is hovered
+   (or its menu is already open, so it doesn't vanish out from under a tap). */
+.chat-message-menu-wrap {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+.chat-message-wrapper:hover .chat-message-menu-wrap,
+.chat-message-menu-wrap.chat-message-menu-open {
+  opacity: 1;
+}
+.chat-kebab {
+  background: rgba(0, 0, 0, 0.15);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  line-height: 1;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+.chat-message-menu {
+  position: absolute;
+  top: 22px;
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-card-hover);
+  display: flex;
+  flex-direction: column;
+  min-width: 110px;
+  overflow: hidden;
+  z-index: 5;
+}
+.chat-message-menu button {
   background: none;
   border: none;
-  color: var(--color-text-muted);
-  font-size: 11px;
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--color-text);
   cursor: pointer;
-  padding: 0;
 }
-.chat-inline-action:hover {
-  color: var(--color-primary);
-  text-decoration: underline;
+.chat-message-menu button:hover {
+  background: var(--color-bg);
 }
 </style>
