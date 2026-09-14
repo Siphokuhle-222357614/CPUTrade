@@ -93,6 +93,18 @@ nginx. Since this is a client-side-routed SPA (Vue Router with
 `index.html` for any path that isn't a real file (Netlify/Vercel do this
 automatically; nginx needs `try_files $uri /index.html;`).
 
+**Installability (PWA)**: the frontend is an installable app (Android/iOS
+"Add to Home Screen", Windows/macOS "Install"/"Add to Dock") via
+`vite-plugin-pwa`. Browsers only offer installation over **HTTPS** (or
+`localhost` in dev) — if "Install" never appears on a real deployment, check
+the site is served over `https://` before assuming the app code is broken.
+Most static hosts (Netlify, Vercel, GitHub Pages, Cloudflare Pages) provision
+HTTPS automatically; a bare nginx VPS needs a certificate (e.g. Let's
+Encrypt/certbot) set up separately. The app icons live in
+`frontend/public/icons/`, generated from `frontend/scripts/icon-source.svg`
+via `node scripts/generate-icons.mjs` (needs `sharp`, a dev dependency) — regenerate
+them if the brand mark ever changes; there's nothing to do at deploy time.
+
 ## 5. First admin account
 
 There's no self-registration path to ADMIN by design (see

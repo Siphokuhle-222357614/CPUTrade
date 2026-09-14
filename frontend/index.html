@@ -3,8 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="The CPUT student marketplace — buy, sell and swap with fellow students." />
     <title>CPUTrade</title>
+
+    <!-- vite-plugin-pwa injects the manifest link + service worker
+         registration automatically. The tags below cover the platforms that
+         don't read a web manifest for this: iOS/iPadOS Safari (pre-16.4) and
+         Windows tiles both need their own dedicated meta tags/icon files. -->
+    <meta name="theme-color" content="#16305c" />
+
+    <!-- iOS/iPadOS: makes "Add to Home Screen" launch full-screen instead of
+         opening inside Safari's chrome, and sets the home-screen icon. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CPUTrade" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+    <!-- Windows: pin-to-Start-Menu tile color/icon. -->
+    <meta name="msapplication-TileColor" content="#16305c" />
+    <meta name="msapplication-TileImage" content="/icons/mstile-150.png" />
   </head>
   <body>
     <div id="app"></div>

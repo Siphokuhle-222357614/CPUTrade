@@ -31,6 +31,16 @@ const canMessageSeller = computed(() => auth.isAuthenticated && !isOwner.value);
 const canRateSeller = computed(() => auth.isAuthenticated && !isOwner.value);
 const canReport = computed(() => auth.isAuthenticated && !isOwner.value);
 
+// A student sharing a listing into a res/campus WhatsApp group is the
+// single most likely way this app spreads organically -- wa.me works from
+// any device (installed app, WhatsApp Web, or the "open in browser"
+// fallback) with no API key or backend involved.
+function shareToWhatsApp() {
+  const price = formatPrice(props.product.price);
+  const text = `Check this out on CPUTrade: ${props.product.title} (${price})\n${window.location.href}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+}
+
 async function handleMessageSeller() {
   messaging.value = true;
   errorMessage.value = "";
@@ -106,6 +116,9 @@ async function handleDelete() {
       </button>
       <button v-if="canReport" type="button" class="btn btn-outline" @click="showReportDialog = true">
         🚩 Report
+      </button>
+      <button type="button" class="btn btn-outline" @click="shareToWhatsApp">
+        📤 Share to WhatsApp
       </button>
 
       <template v-if="canManage">

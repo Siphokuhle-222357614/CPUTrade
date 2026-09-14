@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- CPUTrade app icon: navy background (brand primary), teal price-tag glyph
+       (brand accent), sized to sit inside the safe circle Android's adaptive
+       icon mask keeps, so it survives being cropped to a circle/squircle.
+       Full-bleed, no transparency, and no rounding baked in here on purpose:
+       every platform (iOS, Android adaptive icons, Windows tiles) applies its
+       own corner/shape mask on top, so pre-rounding here would just look
+       inconsistent or leave a visible seam. -->
+  <rect width="512" height="512" fill="#16305c"/>
+  <g transform="translate(256 256) scale(11) translate(-12 -12)">
+    <path
+      d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
+      fill="none"
+      stroke="#0d9488"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <circle cx="7" cy="7" r="1.15" fill="#0d9488"/>
+  </g>
+</svg>
