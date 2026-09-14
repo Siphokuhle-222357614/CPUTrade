@@ -9,6 +9,7 @@ import RatingForm from "./RatingForm.vue";
 import MarkSoldDialog from "./MarkSoldDialog.vue";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
 import ReportDialog from "../trust/ReportDialog.vue";
+import ConfettiBurst from "../common/ConfettiBurst.vue";
 
 const props = defineProps({
   product: {
@@ -28,6 +29,7 @@ const showDeleteConfirm = ref(false);
 const showReportDialog = ref(false);
 const showMarkSoldDialog = ref(false);
 const activePhotoIndex = ref(0);
+const soldBurstKey = ref(0);
 
 const isOwner = computed(() => auth.user?.id === props.product.sellerId);
 const canManage = computed(() => isOwner.value || auth.isAdmin);
@@ -91,6 +93,7 @@ async function handleDelete() {
 
 function handleMarkedSold(updated) {
   showMarkSoldDialog.value = false;
+  soldBurstKey.value++;
   emit("updated", updated);
 }
 
@@ -127,9 +130,10 @@ async function handleMarkAvailable() {
       </button>
     </div>
 
-    <div class="row" style="gap: var(--space-2)">
+    <div class="row" style="gap: var(--space-2); position: relative">
       <span v-if="product.sold" class="badge badge-sold">✅ Sold</span>
       <span v-else-if="!product.active" class="badge badge-inactive">Removed by admin</span>
+      <ConfettiBurst :trigger="soldBurstKey" />
     </div>
 
     <div class="row">

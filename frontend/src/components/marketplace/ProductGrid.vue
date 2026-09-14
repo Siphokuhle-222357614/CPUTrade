@@ -11,7 +11,12 @@ defineProps({
 
 <template>
   <div v-if="products.length" class="product-grid">
-    <ProductCard v-for="product in products" :key="product.id" :product="product" />
+    <ProductCard
+      v-for="(product, index) in products"
+      :key="product.id"
+      :product="product"
+      :style="{ animationDelay: `${Math.min(index, 12) * 35}ms` }"
+    />
   </div>
   <p v-else class="empty-state">No listings here yet — be the first to post one!</p>
 </template>

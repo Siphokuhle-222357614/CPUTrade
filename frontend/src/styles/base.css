@@ -288,6 +288,7 @@ button.card:hover {
 .badge-sold {
   background: rgba(22, 48, 92, 0.08);
   color: var(--color-primary);
+  animation: pop-in 0.4s var(--ease-spring) both;
 }
 
 /* --- Nav bar --- */
@@ -488,5 +489,197 @@ button.card:hover {
   }
   100% {
     background-position: 0 50%;
+  }
+}
+
+/* ============================================================
+   Motion — a small, reused vocabulary instead of one-off effects
+   per component, so animation reads as one deliberate system.
+   ============================================================ */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gentle-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+/* Route transitions — wraps <router-view> in App.vue. */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity var(--transition-base), transform var(--transition-base);
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* Modal entrance/exit (Modal.vue wraps its content in <Transition name="modal">). */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity var(--transition-base);
+}
+.modal-enter-active .modal-dialog,
+.modal-leave-active .modal-dialog {
+  transition: transform var(--transition-base), opacity var(--transition-base);
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-from .modal-dialog,
+.modal-leave-to .modal-dialog {
+  transform: scale(0.94) translateY(8px);
+  opacity: 0;
+}
+
+/* Cards/grid entrance — ProductGrid staggers this per-card via animation-delay. */
+.product-card {
+  animation: fade-in-up 0.4s ease both;
+}
+
+/* Alerts/banners feel like they arrived, not just appeared. */
+.alert {
+  animation: fade-in-up 0.25s ease both;
+}
+
+/* Notification badge — a slow, subtle "there's something new" pulse rather
+   than a static number, without being an annoying strobe. */
+.navbar-badge-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+/* Nav links get a sliding underline instead of just a color swap. */
+.navbar-links a {
+  position: relative;
+}
+.navbar-links a:not(.btn)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-base);
+}
+.navbar-links a:not(.btn):hover::after,
+.navbar-links a:not(.btn).router-link-active::after {
+  transform: scaleX(1);
+}
+.navbar .brand {
+  display: inline-block;
+  transition: transform var(--transition-base);
+}
+.navbar .brand:hover {
+  transform: rotate(-4deg) scale(1.05);
+}
+
+/* Chat: message bubbles arrive, they don't just appear (only plays once per
+   message, since Vue keeps existing keyed nodes across re-renders/polling). */
+.chat-message-wrapper {
+  animation: fade-in-up 0.3s ease both;
+}
+
+/* Chat: three-dot "typing…" indicator. */
+.typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.typing-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.typing-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: typing-bounce 1.2s infinite ease-in-out;
+}
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* A small celebratory burst (ConfettiBurst.vue) for a genuine milestone —
+   e.g. marking a listing sold — not sprinkled on routine actions. */
+.confetti-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.confetti-piece {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 16px;
+  animation: confetti-fly 0.8s ease-out both;
+}
+@keyframes confetti-fly {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) rotate(0deg) scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Respect the OS-level "reduce motion" preference — everything above still
+   works (nothing depends on animation for information), it just stops moving. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }

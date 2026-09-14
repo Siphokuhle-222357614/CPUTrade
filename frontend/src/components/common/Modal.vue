@@ -14,16 +14,18 @@ const emit = defineEmits(["close"]);
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="modal-overlay" @click.self="emit('close')">
-      <div class="modal-dialog" role="dialog" aria-modal="true" :aria-label="title">
-        <div class="modal-header">
-          <h3 style="margin: 0">{{ title }}</h3>
-          <button type="button" class="modal-close" aria-label="Close" @click="emit('close')">✕</button>
-        </div>
-        <div class="modal-body">
-          <slot />
+    <Transition name="modal">
+      <div v-if="open" class="modal-overlay" @click.self="emit('close')">
+        <div class="modal-dialog" role="dialog" aria-modal="true" :aria-label="title">
+          <div class="modal-header">
+            <h3 style="margin: 0">{{ title }}</h3>
+            <button type="button" class="modal-close" aria-label="Close" @click="emit('close')">✕</button>
+          </div>
+          <div class="modal-body">
+            <slot />
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 </template>

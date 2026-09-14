@@ -39,6 +39,11 @@
   --focus-ring: 0 0 0 3px rgba(13, 148, 136, 0.35);
 
   --transition-fast: 0.15s ease;
+  --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  /* A slight overshoot ("spring") for moments that should feel playful/alive
+     rather than purely mechanical — badges popping in, a success moment. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   --font-heading: "Roboto", system-ui, sans-serif;
   --font-body: "Open Sans", system-ui, sans-serif;

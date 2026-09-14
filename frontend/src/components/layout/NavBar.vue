@@ -52,7 +52,7 @@ watch(() => router.currentRoute.value.name, (name) => {
       </router-link>
       <router-link v-if="auth.isAuthenticated" to="/chats">Chats</router-link>
       <router-link v-if="auth.isAuthenticated" to="/notifications" style="position: relative">
-        🔔<span v-if="unreadCount > 0" class="badge badge-free" style="margin-left: 4px">{{ unreadCount }}</span>
+        🔔<span v-if="unreadCount > 0" class="badge badge-free navbar-badge-pulse" style="margin-left: 4px">{{ unreadCount }}</span>
       </router-link>
       <router-link v-if="auth.isAdmin" to="/admin">Admin</router-link>
 

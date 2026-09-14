@@ -353,7 +353,10 @@ onBeforeUnmount(() => {
       </template>
 
       <p v-if="!messages.length" class="empty-state">No messages yet — say hi!</p>
-      <p v-if="otherTyping" class="field-hint" style="font-style: italic">{{ otherUser?.username }} is typing…</p>
+      <p v-if="otherTyping" class="field-hint typing-indicator">
+        {{ otherUser?.username }} is typing
+        <span class="typing-dots"><span></span><span></span><span></span></span>
+      </p>
     </div>
 
     <form v-if="!isBlocked" @submit.prevent="handleSend">
