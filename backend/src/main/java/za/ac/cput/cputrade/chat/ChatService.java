@@ -8,6 +8,7 @@ import za.ac.cput.cputrade.notification.NotificationService;
 import za.ac.cput.cputrade.notification.NotificationType;
 import za.ac.cput.cputrade.product.Product;
 import za.ac.cput.cputrade.product.ProductRepository;
+import za.ac.cput.cputrade.trust.BlockService;
 import za.ac.cput.cputrade.user.User;
 import za.ac.cput.cputrade.user.UserRepository;
 import org.springframework.security.core.Authentication;
@@ -24,15 +25,27 @@ public class ChatService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final BlockService blockService;
 
     public ChatService(ConversationRepository conversationRepository, ChatMessageRepository chatMessageRepository,
                         ProductRepository productRepository, UserRepository userRepository,
-                        NotificationService notificationService) {
+                        NotificationService notificationService, BlockService blockService) {
         this.conversationRepository = conversationRepository;
         this.chatMessageRepository = chatMessageRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.blockService = blockService;
+    }
+
+    /** Shared by both entry points into a conversation — a block in either direction stops messaging. */
+    private void checkNotBlocked(User a, User b) {
+        if (blockService.hasBlocked(a.getId(), b.getId())) {
+            throw ApiException.forbidden("You have blocked this user. Unblock them to send messages.");
+        }
+        if (blockService.hasBlocked(b.getId(), a.getId())) {
+            throw ApiException.forbidden("You can't message this user.");
+        }
     }
 
     /** A buyer messaging a seller for the first time about a listing starts (or reuses) the thread. */
@@ -46,6 +59,7 @@ public class ChatService {
         if (product.getSeller().getId().equals(buyer.getId())) {
             throw ApiException.badRequest("You cannot message yourself about your own listing");
         }
+        checkNotBlocked(buyer, product.getSeller());
 
         Conversation conversation = conversationRepository.findByProductIdAndBuyerId(productId, buyer.getId())
                 .orElseGet(() -> conversationRepository.save(
@@ -61,6 +75,10 @@ public class ChatService {
                 .stream().map(ConversationResponse::from).toList();
     }
 
+    public ConversationResponse getConversation(Long conversationId, Authentication auth) {
+        return ConversationResponse.from(requireParticipant(conversationId, auth));
+    }
+
     public List<ChatMessageResponse> messages(Long conversationId, Authentication auth) {
         Conversation conversation = requireParticipant(conversationId, auth);
         return chatMessageRepository.findByConversationIdOrderByCreatedAtAsc(conversation.getId())
@@ -71,6 +89,10 @@ public class ChatService {
     public ChatMessageResponse postMessage(Long conversationId, ChatMessageRequest request, Authentication auth) {
         Conversation conversation = requireParticipant(conversationId, auth);
         User sender = currentUser(auth);
+        User recipient = conversation.getBuyer().getId().equals(sender.getId())
+                ? conversation.getSeller()
+                : conversation.getBuyer();
+        checkNotBlocked(sender, recipient);
 
         ChatMessage message = ChatMessage.builder()
                 .conversation(conversation)
@@ -82,9 +104,6 @@ public class ChatService {
         ChatMessage saved = chatMessageRepository.save(message);
 
         // US4.3: notify whichever participant didn't send this message.
-        User recipient = conversation.getBuyer().getId().equals(sender.getId())
-                ? conversation.getSeller()
-                : conversation.getBuyer();
         notificationService.create(recipient, NotificationType.NEW_MESSAGE,
                 sender.getUsername() + " sent you a message about \"" + conversation.getProduct().getTitle() + "\"",
                 "/chats/" + conversation.getId());

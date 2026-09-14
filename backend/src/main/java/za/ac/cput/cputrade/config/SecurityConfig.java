@@ -1,5 +1,6 @@
 package za.ac.cput.cputrade.config;
 
+import za.ac.cput.cputrade.security.JwtAccessDeniedHandler;
 import za.ac.cput.cputrade.security.JwtAuthEntryPoint;
 import za.ac.cput.cputrade.security.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,11 +41,14 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final JwtAuthEntryPoint jwtAuthEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final UserDetailsService userDetailsService;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter, JwtAuthEntryPoint jwtAuthEntryPoint, UserDetailsService userDetailsService) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, JwtAuthEntryPoint jwtAuthEntryPoint,
+                           JwtAccessDeniedHandler jwtAccessDeniedHandler, UserDetailsService userDetailsService) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.jwtAuthEntryPoint = jwtAuthEntryPoint;
+        this.jwtAccessDeniedHandler = jwtAccessDeniedHandler;
         this.userDetailsService = userDetailsService;
     }
 
@@ -82,7 +86,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // stateless Bearer-token API, no cookies/CSRF risk
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(handling -> handling.authenticationEntryPoint(jwtAuthEntryPoint))
+                .exceptionHandling(handling -> handling
+                        .authenticationEntryPoint(jwtAuthEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()

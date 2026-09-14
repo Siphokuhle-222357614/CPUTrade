@@ -11,8 +11,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.regex.Pattern;
+
 @Service
 public class AuthService {
+
+    // Students self-register with no other verification step, so this is
+    // the trust boundary that makes the platform "CPUT-only" rather than
+    // open to anyone. VENDOR accounts are deliberately exempt — they go
+    // through admin approval instead (US1.5), which is the appropriate
+    // check for a legitimate outside business, not a university email.
+    private static final Pattern CPUT_STUDENT_EMAIL =
+            Pattern.compile("^[^@\\s]+@(mycput|cput)\\.ac\\.za$", Pattern.CASE_INSENSITIVE);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -37,6 +47,11 @@ public class AuthService {
         }
 
         Role role = Role.valueOf(request.getRole());
+
+        if (role == Role.STUDENT && !CPUT_STUDENT_EMAIL.matcher(request.getEmail()).matches()) {
+            throw ApiException.badRequest(
+                    "Students must register with an official CPUT email address (@mycput.ac.za or @cput.ac.za)");
+        }
 
         User user = User.builder()
                 .username(request.getUsername())

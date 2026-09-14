@@ -8,6 +8,10 @@ export function myConversations() {
   return client.get("/conversations");
 }
 
+export function getConversation(conversationId) {
+  return client.get(`/conversations/${conversationId}`);
+}
+
 export function getMessages(conversationId) {
   return client.get(`/conversations/${conversationId}/messages`);
 }

@@ -32,6 +32,11 @@ public class ChatController {
         return ResponseEntity.ok(chatService.myConversations(auth));
     }
 
+    @GetMapping("/api/conversations/{conversationId}")
+    public ResponseEntity<ConversationResponse> getConversation(@PathVariable Long conversationId, Authentication auth) {
+        return ResponseEntity.ok(chatService.getConversation(conversationId, auth));
+    }
+
     @GetMapping("/api/conversations/{conversationId}/messages")
     public ResponseEntity<List<ChatMessageResponse>> messages(@PathVariable Long conversationId, Authentication auth) {
         return ResponseEntity.ok(chatService.messages(conversationId, auth));

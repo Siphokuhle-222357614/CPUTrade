@@ -16,7 +16,8 @@ body {
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
@@ -24,13 +25,30 @@ h2,
 h3,
 h4 {
   font-family: var(--font-heading);
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   margin: 0 0 var(--space-3);
   color: var(--color-primary);
 }
 
 a {
+  color: var(--color-primary-light);
+}
+a:hover {
   color: var(--color-primary);
+}
+
+/* A visible, on-brand focus ring for anything interactive — replaces the
+   browser default so keyboard navigation is clearly visible without
+   clashing with the palette. */
+a:focus-visible,
+button:focus-visible,
+.pill:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 img {
@@ -74,34 +92,48 @@ img {
   font-size: 14px;
   cursor: pointer;
   text-decoration: none;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .btn-primary {
   background: var(--color-primary);
   color: #fff;
 }
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background: var(--color-primary-dark);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-accent {
   background: var(--color-accent);
   color: #fff;
 }
-.btn-accent:hover {
+.btn-accent:hover:not(:disabled) {
   background: var(--color-accent-dark);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-outline {
-  background: transparent;
+  background: var(--color-surface);
   color: var(--color-primary);
   border: 1px solid var(--color-border);
+}
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--color-primary-light);
+  background: var(--color-bg);
 }
 
 .btn-danger {
   background: var(--color-danger);
   color: #fff;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn:disabled {
@@ -137,13 +169,15 @@ img {
   font-size: 14px;
   background: var(--color-surface);
   color: var(--color-text);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: var(--focus-ring);
 }
 
 .field-hint {
@@ -180,6 +214,20 @@ img {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+}
+
+/* Any card that's also a link/button (product cards, table-list rows) gets
+   a hover lift so the whole app feels tactile instead of static. */
+a.card,
+button.card {
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast);
+}
+a.card:hover,
+button.card:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--color-primary-light);
+  transform: translateY(-2px);
 }
 
 /* --- Pills / badges --- */
@@ -195,6 +243,10 @@ img {
   color: var(--color-text);
   cursor: pointer;
   white-space: nowrap;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+.pill:hover {
+  border-color: var(--color-primary-light);
 }
 .pill.active {
   background: var(--color-primary);
@@ -212,17 +264,26 @@ img {
   letter-spacing: 0.02em;
 }
 .badge-free {
-  background: var(--color-accent);
-  color: #fff;
+  background: var(--color-accent-bg);
+  color: var(--color-accent-dark);
 }
 .badge-condition {
   background: var(--color-bg);
   color: var(--color-text-muted);
   border: 1px solid var(--color-border);
 }
-.badge-inactive {
+.badge-inactive,
+.badge-danger {
   background: var(--color-danger-bg);
   color: var(--color-danger);
+}
+.badge-success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.badge-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 /* --- Nav bar --- */
@@ -235,15 +296,25 @@ img {
   justify-content: space-between;
   gap: var(--space-4);
   flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 2px 8px rgba(14, 32, 64, 0.25);
 }
 .navbar a {
-  color: #fff;
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
+  transition: color var(--transition-fast);
+}
+.navbar a:hover,
+.navbar a.router-link-active {
+  color: #fff;
 }
 .navbar .brand {
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 18px;
+  color: #fff;
 }
 .navbar-links {
   display: flex;
@@ -255,6 +326,14 @@ img {
 .navbar .btn-outline {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+}
+.navbar .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+}
+.navbar .btn-accent:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* --- Category pill row (horizontal scroll on mobile) --- */
@@ -338,4 +417,65 @@ img {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+
+/* --- Modal (Modal.vue / ConfirmDialog.vue / ReportDialog.vue) --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 100;
+}
+
+.modal-dialog {
+  background: var(--color-surface);
+  border-radius: var(--radius-modal);
+  box-shadow: var(--shadow-modal);
+  max-width: 440px;
+  width: 100%;
+  max-height: calc(100vh - var(--space-6));
+  overflow-y: auto;
+  padding: var(--space-5);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: var(--space-1);
+}
+.modal-close:hover {
+  color: var(--color-text);
+}
+
+/* --- Skeleton loading placeholders (SkeletonCard.vue) --- */
+.skeleton {
+  background: linear-gradient(90deg, var(--color-border) 25%, #eef1f5 37%, var(--color-border) 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  border-radius: var(--radius-input);
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
 }

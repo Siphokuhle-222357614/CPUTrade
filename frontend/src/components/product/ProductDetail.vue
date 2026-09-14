@@ -6,6 +6,8 @@ import { deleteProduct } from "../../api/products";
 import { startConversation } from "../../api/chat";
 import SellerRatingBadge from "./SellerRatingBadge.vue";
 import RatingForm from "./RatingForm.vue";
+import ConfirmDialog from "../common/ConfirmDialog.vue";
+import ReportDialog from "../trust/ReportDialog.vue";
 
 const props = defineProps({
   product: {
@@ -20,11 +22,14 @@ const router = useRouter();
 const deleting = ref(false);
 const messaging = ref(false);
 const errorMessage = ref("");
+const showDeleteConfirm = ref(false);
+const showReportDialog = ref(false);
 
 const isOwner = computed(() => auth.user?.id === props.product.sellerId);
 const canManage = computed(() => isOwner.value || auth.isAdmin);
 const canMessageSeller = computed(() => auth.isAuthenticated && !isOwner.value);
 const canRateSeller = computed(() => auth.isAuthenticated && !isOwner.value);
+const canReport = computed(() => auth.isAuthenticated && !isOwner.value);
 
 async function handleMessageSeller() {
   messaging.value = true;
@@ -53,7 +58,7 @@ function formatPrice(price) {
 }
 
 async function handleDelete() {
-  if (!window.confirm("Delete this listing? This can't be undone.")) return;
+  showDeleteConfirm.value = false;
   deleting.value = true;
   errorMessage.value = "";
   try {
@@ -99,17 +104,37 @@ async function handleDelete() {
       <button v-if="canMessageSeller" type="button" class="btn btn-primary" :disabled="messaging" @click="handleMessageSeller">
         {{ messaging ? "Starting chat…" : "💬 Message Seller" }}
       </button>
+      <button v-if="canReport" type="button" class="btn btn-outline" @click="showReportDialog = true">
+        🚩 Report
+      </button>
 
       <template v-if="canManage">
         <router-link :to="{ name: 'product-edit', params: { id: product.id } }" class="btn btn-outline">
           Edit
         </router-link>
-        <button type="button" class="btn btn-danger" :disabled="deleting" @click="handleDelete">
+        <button type="button" class="btn btn-danger" :disabled="deleting" @click="showDeleteConfirm = true">
           {{ deleting ? "Deleting…" : "Delete" }}
         </button>
       </template>
     </div>
 
     <RatingForm v-if="canRateSeller" :product-id="product.id" />
+
+    <ConfirmDialog
+      :open="showDeleteConfirm"
+      title="Delete this listing?"
+      message="This can't be undone."
+      confirm-label="Delete"
+      danger
+      @confirm="handleDelete"
+      @cancel="showDeleteConfirm = false"
+    />
+    <ReportDialog
+      :open="showReportDialog"
+      target-type="PRODUCT"
+      :target-id="product.id"
+      :target-label="product.title"
+      @close="showReportDialog = false"
+    />
   </div>
 </template>

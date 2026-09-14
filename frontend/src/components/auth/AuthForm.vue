@@ -94,8 +94,27 @@ async function handleSubmit() {
       </div>
 
       <div class="field" v-if="mode === 'register'">
+        <label for="role">I am a</label>
+        <select id="role" v-model="form.role">
+          <option value="STUDENT">Student</option>
+          <option value="VENDOR">Vendor</option>
+        </select>
+        <p class="field-hint">Vendor accounts require admin approval before you can sell.</p>
+      </div>
+
+      <div class="field" v-if="mode === 'register'">
         <label for="email">Email address</label>
-        <input id="email" v-model="form.email" type="email" placeholder="your.real@email.com" required />
+        <input
+          id="email"
+          v-model="form.email"
+          type="email"
+          :placeholder="form.role === 'STUDENT' ? 'yourname@mycput.ac.za' : 'your.business@email.com'"
+          required
+        />
+        <p v-if="form.role === 'STUDENT'" class="field-hint">
+          🎓 Students must register with an official CPUT email (@mycput.ac.za or @cput.ac.za) — this keeps the
+          marketplace CPUT-only.
+        </p>
       </div>
 
       <div class="field">
@@ -108,15 +127,6 @@ async function handleSubmit() {
           required
           minlength="8"
         />
-      </div>
-
-      <div class="field" v-if="mode === 'register'">
-        <label for="role">Role</label>
-        <select id="role" v-model="form.role">
-          <option value="STUDENT">Student</option>
-          <option value="VENDOR">Vendor</option>
-        </select>
-        <p class="field-hint">Vendor accounts require admin approval before you can sell.</p>
       </div>
 
       <button type="submit" class="btn btn-primary btn-block" :disabled="loading">

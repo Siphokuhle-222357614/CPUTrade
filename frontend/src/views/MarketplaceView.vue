@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import CategoryFilterPills from "../components/marketplace/CategoryFilterPills.vue";
 import SearchAndPriceFilter from "../components/marketplace/SearchAndPriceFilter.vue";
 import ProductGrid from "../components/marketplace/ProductGrid.vue";
+import SkeletonCard from "../components/common/SkeletonCard.vue";
 import { listProducts } from "../api/products";
 import { loadCache, saveCache } from "../utils/offlineCache";
 
@@ -69,6 +70,8 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
     You're offline — showing listings cached from your last visit. They may be out of date.
   </p>
   <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
-  <p v-if="loading">Loading…</p>
+  <div v-if="loading" class="product-grid">
+    <SkeletonCard v-for="n in 8" :key="n" />
+  </div>
   <ProductGrid v-else :products="products" />
 </template>

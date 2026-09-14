@@ -1,11 +1,13 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { ref, onMounted } from "vue";
 import { getAllListings, deactivateListing } from "../../api/admin";
+import ConfirmDialog from "../common/ConfirmDialog.vue";
 
 const listings = ref([]);
 const loading = ref(true);
 const errorMessage = ref("");
 const removingId = ref(null);
+const pendingDeactivateId = ref(null);
 
 async function load() {
   loading.value = true;
@@ -19,8 +21,9 @@ async function load() {
   }
 }
 
-async function handleDeactivate(id) {
-  if (!window.confirm("Remove this listing for fraud/abuse? The seller will be notified.")) return;
+async function handleDeactivate() {
+  const id = pendingDeactivateId.value;
+  pendingDeactivateId.value = null;
   removingId.value = id;
   try {
     const { data } = await deactivateListing(id);
@@ -54,11 +57,21 @@ onMounted(load);
           type="button"
           class="btn btn-danger"
           :disabled="removingId === product.id"
-          @click="handleDeactivate(product.id)"
+          @click="pendingDeactivateId = product.id"
         >
           {{ removingId === product.id ? "Removing…" : "Remove" }}
         </button>
       </div>
     </div>
+
+    <ConfirmDialog
+      :open="pendingDeactivateId !== null"
+      title="Remove this listing?"
+      message="It's for fraud/abuse and the seller will be notified. The listing stays visible to admins for moderation records."
+      confirm-label="Remove"
+      danger
+      @confirm="handleDeactivate"
+      @cancel="pendingDeactivateId = null"
+    />
   </div>
 </template>

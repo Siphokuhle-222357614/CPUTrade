@@ -1,22 +1,44 @@
-/* Design tokens from the CPUTrade design system (Term 2 doc, section 4.1). */
+/* Design tokens — "Trust Blue & Teal": a refined, fuller version of the
+   original CPUTrade design system (Term 2 doc, section 4.1), extended with
+   an accessible hover/link shade, semantic success/warning/danger pairs,
+   elevation shadows, and a focus-ring token so the whole app reads as one
+   deliberate system rather than ad hoc per-component choices. */
 :root {
-  --color-primary: #1f3864; /* deep navy — headers, buttons, nav bar */
-  --color-primary-dark: #162a4a;
-  --color-accent: #1a6b5a; /* teal — CTAs, success states, Freecycle badge */
-  --color-accent-dark: #124f42;
+  --color-primary: #16305c; /* deep navy — headers, buttons, nav bar */
+  --color-primary-light: #2c5aa0; /* accessible link/hover blue */
+  --color-primary-dark: #0e2040;
+  --color-accent: #0d9488; /* teal — CTAs, success states, Freecycle badge */
+  --color-accent-dark: #0a746b;
+  --color-accent-bg: #ecfdf9;
+
   --color-bg: #f5f7fa;
   --color-surface: #ffffff;
-  --color-text: #2c3e50;
-  --color-text-muted: #6b7a8d;
-  --color-border: #e1e6ec;
-  --color-danger: #b3261e;
-  --color-danger-bg: #fdecea;
-  --color-warning-bg: #fff4e5;
-  --color-warning-text: #8a5a00;
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
 
-  --radius-card: 8px;
-  --radius-input: 4px;
+  --color-success: #15803d;
+  --color-success-bg: #ecfdf3;
+  --color-warning: #b45309;
+  --color-warning-bg: #fff7ed;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fef2f2;
+
+  /* Kept for anything still referencing the old names. */
+  --color-warning-text: var(--color-warning);
+
+  --radius-card: 10px;
+  --radius-input: 6px;
   --radius-pill: 24px;
+  --radius-modal: 14px;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-card-hover: 0 8px 20px rgba(15, 23, 42, 0.1), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --shadow-modal: 0 20px 50px rgba(15, 23, 42, 0.25);
+  --focus-ring: 0 0 0 3px rgba(13, 148, 136, 0.35);
+
+  --transition-fast: 0.15s ease;
 
   --font-heading: "Roboto", system-ui, sans-serif;
   --font-body: "Open Sans", system-ui, sans-serif;
