@@ -54,4 +54,10 @@ public class AdminController {
     public ResponseEntity<List<UserSummaryDto>> suspendedUsers() {
         return ResponseEntity.ok(adminService.suspendedUsers());
     }
+
+    /** Every student and vendor — the admin's general user-management list (US6.3-adjacent). */
+    @GetMapping("/users")
+    public ResponseEntity<List<UserSummaryDto>> allUsers() {
+        return ResponseEntity.ok(adminService.allNonAdminUsers());
+    }
 }

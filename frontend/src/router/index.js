@@ -21,13 +21,15 @@ const routes = [
     path: "/dashboard",
     name: "dashboard",
     component: () => import("../views/DashboardView.vue"),
-    meta: { requiresAuth: true },
+    // Admins moderate the platform, they don't sell on it — no business
+    // dashboard for them (see the beforeEach guard below).
+    meta: { requiresAuth: true, blockAdmin: true },
   },
   {
     path: "/products/new",
     name: "product-new",
     component: () => import("../views/ListingFormView.vue"),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, blockAdmin: true },
   },
   {
     path: "/products/:id",
@@ -91,6 +93,10 @@ router.beforeEach((to) => {
 
   if (to.meta.requiresAdmin && !auth.isAdmin) {
     return { name: "marketplace" };
+  }
+
+  if (to.meta.blockAdmin && auth.isAdmin) {
+    return { name: "admin" };
   }
 
   return true;

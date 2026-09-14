@@ -45,8 +45,9 @@ watch(() => router.currentRoute.value.name, (name) => {
     <router-link to="/" class="brand">🛒 CPUTrade</router-link>
     <nav class="navbar-links">
       <router-link to="/board">Board</router-link>
-      <router-link v-if="auth.isAuthenticated" to="/dashboard">Dashboard</router-link>
-      <router-link v-if="auth.isAuthenticated" to="/products/new" class="btn btn-accent">
+      <!-- Admins moderate the platform, they don't sell on it — no business dashboard for them. -->
+      <router-link v-if="auth.isAuthenticated && !auth.isAdmin" to="/dashboard">Dashboard</router-link>
+      <router-link v-if="auth.isAuthenticated && !auth.isAdmin" to="/products/new" class="btn btn-accent">
         + Sell
       </router-link>
       <router-link v-if="auth.isAuthenticated" to="/chats">Chats</router-link>

@@ -17,4 +17,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRoleAndVendorApprovedFalse(Role role);
 
     List<User> findByAccountStatusOrderByCreatedAtDesc(AccountStatus accountStatus);
+
+    /** Admin's user-management list — every student and vendor (never admins), for suspending without needing a report first. */
+    List<User> findByRoleNotOrderByCreatedAtDesc(Role role);
 }

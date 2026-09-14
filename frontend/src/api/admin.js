@@ -27,3 +27,8 @@ export function reactivateUser(userId) {
 export function getSuspendedUsers() {
   return client.get("/admin/users/suspended");
 }
+
+/** Every student and vendor — the admin's general user-management list. */
+export function getAllUsers() {
+  return client.get("/admin/users");
+}

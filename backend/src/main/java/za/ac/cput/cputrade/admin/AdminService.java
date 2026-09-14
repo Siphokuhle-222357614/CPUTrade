@@ -119,4 +119,11 @@ public class AdminService {
                 .map(UserSummaryDto::from)
                 .toList();
     }
+
+    /** Every student and vendor (never admins) — so an admin can suspend someone directly, not only via a filed report. */
+    public List<UserSummaryDto> allNonAdminUsers() {
+        return userRepository.findByRoleNotOrderByCreatedAtDesc(Role.ADMIN).stream()
+                .map(UserSummaryDto::from)
+                .toList();
+    }
 }
