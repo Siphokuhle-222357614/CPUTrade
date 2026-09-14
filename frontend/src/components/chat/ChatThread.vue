@@ -306,14 +306,15 @@ onBeforeUnmount(() => {
             class="card chat-bubble"
             :class="{ 'chat-bubble-own': row.message.senderId === auth.user?.id }"
           >
-            <!-- WhatsApp-style: hidden until hover/tap, or while its menu is open -->
+            <!-- Fixed (always-visible) chevron trigger — not a hover-only kebab. -->
             <div
               v-if="row.message.senderId === auth.user?.id && !row.message.deleted && editingId !== row.message.id"
               class="chat-message-menu-wrap"
-              :class="{ 'chat-message-menu-open': openMenuId === row.message.id }"
             >
-              <button type="button" class="chat-kebab" aria-label="Message options" @click.stop="toggleMenu(row.message.id)">
-                ⋮
+              <button type="button" class="chat-menu-trigger" aria-label="Message options" @click.stop="toggleMenu(row.message.id)">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
               </button>
               <div v-if="openMenuId === row.message.id" class="chat-message-menu">
                 <button type="button" @click="startEdit(row.message)">✏️ Edit</button>
@@ -481,29 +482,27 @@ onBeforeUnmount(() => {
   color: #53bdeb;
 }
 
-/* WhatsApp-style: the ⋮ trigger stays hidden until the message is hovered
-   (or its menu is already open, so it doesn't vanish out from under a tap). */
+/* A fixed (always-visible) chevron trigger, not a hover-only kebab. */
 .chat-message-menu-wrap {
   position: absolute;
   top: 2px;
   right: 4px;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
 }
-.chat-message-wrapper:hover .chat-message-menu-wrap,
-.chat-message-menu-wrap.chat-message-menu-open {
-  opacity: 1;
-}
-.chat-kebab {
+.chat-menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(0, 0, 0, 0.15);
   border: none;
   border-radius: 50%;
   width: 20px;
   height: 20px;
-  line-height: 1;
   color: #fff;
   cursor: pointer;
-  font-size: 13px;
+  transition: background-color var(--transition-fast);
+}
+.chat-menu-trigger:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 .chat-message-menu {
   position: absolute;
