@@ -48,8 +48,10 @@ public class Product {
     @Column(nullable = false, length = 30)
     private Category category;
 
+    // Mapped to "item_condition" — "condition" is a reserved word in MySQL
+    // (used in stored-routine syntax) and breaks CREATE TABLE unquoted.
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "item_condition", nullable = false, length = 20)
     private Condition condition;
 
     @Lob
