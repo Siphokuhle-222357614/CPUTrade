@@ -1,6 +1,8 @@
 package za.ac.cput.cputrade.admin;
 
 import za.ac.cput.cputrade.common.exception.ApiException;
+import za.ac.cput.cputrade.notification.NotificationService;
+import za.ac.cput.cputrade.notification.NotificationType;
 import za.ac.cput.cputrade.product.Product;
 import za.ac.cput.cputrade.product.ProductRepository;
 import za.ac.cput.cputrade.product.ProductService;
@@ -22,13 +24,16 @@ public class AdminService {
     private final ProductRepository productRepository;
     private final ProductService productService;
     private final EmailNotifier emailNotifier;
+    private final NotificationService notificationService;
 
     public AdminService(UserRepository userRepository, ProductRepository productRepository,
-                         ProductService productService, EmailNotifier emailNotifier) {
+                         ProductService productService, EmailNotifier emailNotifier,
+                         NotificationService notificationService) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.productService = productService;
         this.emailNotifier = emailNotifier;
+        this.notificationService = notificationService;
     }
 
     /** US1.5: admin's pending vendor-request queue. */
@@ -48,6 +53,8 @@ public class AdminService {
         user.setVendorApproved(true);
         User saved = userRepository.save(user);
         emailNotifier.sendVendorApprovalEmail(saved);
+        notificationService.create(saved, NotificationType.VENDOR_APPROVED,
+                "Your vendor account has been approved — you can now list items for sale.", "/products/new");
         return UserSummaryDto.from(saved);
     }
 
@@ -65,6 +72,9 @@ public class AdminService {
         product.setActive(false);
         Product saved = productRepository.save(product);
         emailNotifier.sendListingRemovedEmail(product.getSeller(), saved);
+        // No link: the listing is now inactive, so its detail page 404s for a non-admin viewer.
+        notificationService.create(product.getSeller(), NotificationType.LISTING_REMOVED,
+                "Your listing \"" + product.getTitle() + "\" was removed by an admin.", null);
         return productService.toResponse(saved);
     }
 }

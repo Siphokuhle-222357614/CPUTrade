@@ -62,6 +62,12 @@ public class Product {
     @Builder.Default
     private boolean active = true;
 
+    // US2.4: incremented each time a shopper opens the listing's detail page
+    // (ProductService#getActiveById) — not incremented by search/list results.
+    @Column(name = "view_count", nullable = false)
+    @Builder.Default
+    private long viewCount = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

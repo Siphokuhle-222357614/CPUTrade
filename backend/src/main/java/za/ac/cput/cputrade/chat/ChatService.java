@@ -4,6 +4,8 @@ import za.ac.cput.cputrade.chat.dto.ChatMessageRequest;
 import za.ac.cput.cputrade.chat.dto.ChatMessageResponse;
 import za.ac.cput.cputrade.chat.dto.ConversationResponse;
 import za.ac.cput.cputrade.common.exception.ApiException;
+import za.ac.cput.cputrade.notification.NotificationService;
+import za.ac.cput.cputrade.notification.NotificationType;
 import za.ac.cput.cputrade.product.Product;
 import za.ac.cput.cputrade.product.ProductRepository;
 import za.ac.cput.cputrade.user.User;
@@ -21,13 +23,16 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public ChatService(ConversationRepository conversationRepository, ChatMessageRepository chatMessageRepository,
-                        ProductRepository productRepository, UserRepository userRepository) {
+                        ProductRepository productRepository, UserRepository userRepository,
+                        NotificationService notificationService) {
         this.conversationRepository = conversationRepository;
         this.chatMessageRepository = chatMessageRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     /** A buyer messaging a seller for the first time about a listing starts (or reuses) the thread. */
@@ -74,7 +79,17 @@ public class ChatService {
                 .locationSuggestion(request.getLocationSuggestion())
                 .build();
 
-        return ChatMessageResponse.from(chatMessageRepository.save(message));
+        ChatMessage saved = chatMessageRepository.save(message);
+
+        // US4.3: notify whichever participant didn't send this message.
+        User recipient = conversation.getBuyer().getId().equals(sender.getId())
+                ? conversation.getSeller()
+                : conversation.getBuyer();
+        notificationService.create(recipient, NotificationType.NEW_MESSAGE,
+                sender.getUsername() + " sent you a message about \"" + conversation.getProduct().getTitle() + "\"",
+                "/chats/" + conversation.getId());
+
+        return ChatMessageResponse.from(saved);
     }
 
     private Conversation requireParticipant(Long conversationId, Authentication auth) {

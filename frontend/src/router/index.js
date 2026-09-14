@@ -50,6 +50,17 @@ const routes = [
     props: true,
     meta: { requiresAuth: true },
   },
+  {
+    path: "/board",
+    name: "bulletin",
+    component: () => import("../views/BulletinView.vue"),
+  },
+  {
+    path: "/notifications",
+    name: "notifications",
+    component: () => import("../views/NotificationsView.vue"),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({

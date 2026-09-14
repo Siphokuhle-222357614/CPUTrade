@@ -55,11 +55,14 @@ public class ProductService {
         return products.stream().map(this::toResponse).toList();
     }
 
+    @Transactional
     public ProductResponse getActiveById(Long id) {
         Product product = productRepository.findById(id)
                 .filter(Product::isActive)
                 .orElseThrow(() -> ApiException.notFound("Listing not found"));
-        return toResponse(product);
+        // US2.4: count each detail-page open, not each appearance in search results.
+        product.setViewCount(product.getViewCount() + 1);
+        return toResponse(productRepository.save(product));
     }
 
     @Transactional

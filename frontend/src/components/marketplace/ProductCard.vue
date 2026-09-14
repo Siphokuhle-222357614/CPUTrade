@@ -33,6 +33,7 @@ function formatPrice(price) {
       <span class="price">{{ formatPrice(product.price) }}</span>
       <span class="badge badge-condition">{{ conditionLabels[product.condition] || product.condition }}</span>
     </div>
+    <span v-if="product.freecycle" class="badge badge-free">♻️ Freecycle</span>
     <SellerRatingBadge :average="product.sellerRatingAverage" :count="product.sellerRatingCount" />
   </router-link>
 </template>

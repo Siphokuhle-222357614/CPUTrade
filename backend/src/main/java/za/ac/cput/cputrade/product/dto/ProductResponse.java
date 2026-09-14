@@ -30,6 +30,10 @@ public class ProductResponse {
     /** Null when the seller has no ratings yet (US6.1). */
     private Double sellerRatingAverage;
     private long sellerRatingCount;
+    /** US2.4: how many times this listing's detail page has been opened. */
+    private long viewCount;
+    /** US2.3: true when price is exactly 0 — shown as a "Freecycle" badge. */
+    private boolean freecycle;
 
     public static ProductResponse from(Product product, RatingSummary sellerRating) {
         return ProductResponse.builder()
@@ -47,6 +51,8 @@ public class ProductResponse {
                 .updatedAt(product.getUpdatedAt())
                 .sellerRatingAverage(sellerRating.average())
                 .sellerRatingCount(sellerRating.count())
+                .viewCount(product.getViewCount())
+                .freecycle(product.getPrice() != null && product.getPrice().signum() == 0)
                 .build();
     }
 }

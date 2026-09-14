@@ -87,12 +87,14 @@ async function handleDelete() {
       <h1 style="margin: 0">{{ formatPrice(product.price) }}</h1>
       <span class="badge badge-condition">{{ conditionLabels[product.condition] || product.condition }}</span>
     </div>
+    <span v-if="product.freecycle" class="badge badge-free" style="margin-top: var(--space-2)">♻️ Freecycle</span>
 
     <h3>{{ product.title }}</h3>
     <p style="white-space: pre-wrap">{{ product.description }}</p>
     <p class="field-hint">
       Sold by {{ product.sellerUsername }} ·
       <SellerRatingBadge :average="product.sellerRatingAverage" :count="product.sellerRatingCount" />
+      · {{ product.viewCount }} view{{ product.viewCount === 1 ? "" : "s" }}
     </p>
 
     <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
