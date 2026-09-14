@@ -1,14 +1,17 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import CategoryFilterPills from "../components/marketplace/CategoryFilterPills.vue";
 import SearchAndPriceFilter from "../components/marketplace/SearchAndPriceFilter.vue";
 import ProductGrid from "../components/marketplace/ProductGrid.vue";
 import SkeletonCard from "../components/common/SkeletonCard.vue";
 import { listProducts } from "../api/products";
 import { loadCache, saveCache } from "../utils/offlineCache";
+import { formatDayLabel } from "../utils/datetime";
+import { useAuthStore } from "../stores/auth";
 
 const CACHE_KEY = "marketplace_all";
 
+const auth = useAuthStore();
 const category = ref(null);
 const keyword = ref("");
 const minPrice = ref("");
@@ -36,6 +39,10 @@ async function load() {
     // US7.1: only cache the unfiltered feed — that's the useful "last known
     // good" view to fall back to when a filtered request fails offline.
     if (noFilters) saveCache(CACHE_KEY, data);
+    // The hero stats below should describe the whole marketplace, not
+    // whatever's currently filtered — piggyback on an unfiltered fetch so
+    // there's no separate endpoint to add just for a few numbers.
+    if (noFilters) allListingsForStats.value = data;
   } catch (err) {
     const cached = noFilters ? loadCache(CACHE_KEY) : null;
     if (cached) {
@@ -60,10 +67,54 @@ watch(category, load);
 watch([keyword, minPrice, maxPrice], debouncedLoad);
 onMounted(load);
 onBeforeUnmount(() => clearTimeout(debounceTimer));
+
+// --- Hero: a real, live snapshot of the marketplace, not decoration -------
+const allListingsForStats = ref([]);
+
+const greeting = computed(() => {
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const name = auth.user?.username;
+  return name ? `${timeGreeting}, ${name} 👋` : `${timeGreeting}, welcome to CPUTrade 👋`;
+});
+
+const heroStats = computed(() => {
+  const listings = allListingsForStats.value;
+  return {
+    total: listings.length,
+    free: listings.filter((p) => p.freecycle).length,
+    categories: new Set(listings.map((p) => p.category)).size,
+    today: listings.filter((p) => formatDayLabel(p.createdAt) === "Today").length,
+  };
+});
 </script>
 
 <template>
-  <h1>Marketplace</h1>
+  <div class="hero-band">
+    <div class="hero-band-content">
+      <h1 class="hero-greeting">{{ greeting }}</h1>
+      <p class="hero-subtitle">Textbooks, tech, clothes and more — from fellow CPUT students.</p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <strong>{{ heroStats.total }}</strong>
+          <span>Live listings</span>
+        </div>
+        <div class="hero-stat">
+          <strong>{{ heroStats.today }}</strong>
+          <span>Posted today</span>
+        </div>
+        <div class="hero-stat">
+          <strong>{{ heroStats.free }}</strong>
+          <span>♻️ Free right now</span>
+        </div>
+        <div class="hero-stat">
+          <strong>{{ heroStats.categories }}</strong>
+          <span>Categories active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <CategoryFilterPills v-model="category" />
   <SearchAndPriceFilter v-model:keyword="keyword" v-model:min-price="minPrice" v-model:max-price="maxPrice" />
   <p v-if="offline" class="alert alert-info">

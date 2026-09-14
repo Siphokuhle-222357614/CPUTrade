@@ -18,6 +18,7 @@ import ConfirmDialog from "../common/ConfirmDialog.vue";
 import ProfileDialog from "./ProfileDialog.vue";
 import { dateKey, formatDayLabel, formatLastSeen, formatTime } from "../../utils/datetime";
 import { playMessageSound } from "../../utils/sound";
+import { useToastStore } from "../../stores/toast";
 
 const props = defineProps({
   conversationId: {
@@ -27,6 +28,7 @@ const props = defineProps({
 });
 
 const auth = useAuthStore();
+const toast = useToastStore();
 const conversation = ref(null);
 const messages = ref([]);
 const loading = ref(true);
@@ -231,6 +233,7 @@ async function handleBlockConfirm() {
   try {
     await blockUser(otherUser.value.id);
     isBlocked.value = true;
+    toast.info(`Blocked ${otherUser.value.username}.`);
   } catch (err) {
     errorMessage.value = err.response?.data?.message || "Could not block this user.";
   }
@@ -241,6 +244,7 @@ async function handleUnblock() {
   try {
     await unblockUser(otherUser.value.id);
     isBlocked.value = false;
+    toast.success(`Unblocked ${otherUser.value.username}.`);
   } catch (err) {
     errorMessage.value = err.response?.data?.message || "Could not unblock this user.";
   }

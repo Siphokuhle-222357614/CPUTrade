@@ -3,6 +3,9 @@ import { reactive, ref, watch } from "vue";
 import Modal from "../common/Modal.vue";
 import { suspendUser } from "../../api/admin";
 import { localInputToBackend } from "../../utils/datetime";
+import { useToastStore } from "../../stores/toast";
+
+const toast = useToastStore();
 
 const props = defineProps({
   open: {
@@ -47,6 +50,7 @@ async function handleSubmit() {
       // is always Africa/Johannesburg; see utils/datetime.js).
       suspendedUntil: localInputToBackend(form.suspendedUntil),
     });
+    toast.info(`${props.username} suspended.`);
     emit("suspended");
   } catch (err) {
     errorMessage.value = err.response?.data?.message || "Could not suspend this account.";

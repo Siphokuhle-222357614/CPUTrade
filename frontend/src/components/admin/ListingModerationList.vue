@@ -2,7 +2,9 @@
 import { ref, onMounted } from "vue";
 import { getAllListings, deactivateListing } from "../../api/admin";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
+import { useToastStore } from "../../stores/toast";
 
+const toast = useToastStore();
 const listings = ref([]);
 const loading = ref(true);
 const errorMessage = ref("");
@@ -29,6 +31,7 @@ async function handleDeactivate() {
     const { data } = await deactivateListing(id);
     const index = listings.value.findIndex((p) => p.id === id);
     if (index !== -1) listings.value[index] = data;
+    toast.info("Listing removed and seller notified.");
   } catch (err) {
     errorMessage.value = err.response?.data?.message || "Could not remove this listing.";
   } finally {

@@ -1,7 +1,9 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { getPendingVendorRequests, approveVendor } from "../../api/admin";
+import { useToastStore } from "../../stores/toast";
 
+const toast = useToastStore();
 const requests = ref([]);
 const loading = ref(true);
 const errorMessage = ref("");
@@ -21,9 +23,11 @@ async function load() {
 
 async function handleApprove(userId) {
   approvingId.value = userId;
+  const user = requests.value.find((u) => u.id === userId);
   try {
     await approveVendor(userId);
     requests.value = requests.value.filter((u) => u.id !== userId);
+    toast.success(`${user?.username || "Vendor"} approved. ✅`);
   } catch (err) {
     errorMessage.value = err.response?.data?.message || "Could not approve this vendor.";
   } finally {

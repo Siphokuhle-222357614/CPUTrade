@@ -4,6 +4,9 @@ import { useRouter } from "vue-router";
 import ImageUploadInput from "./ImageUploadInput.vue";
 import PhotoManager from "./PhotoManager.vue";
 import { createProduct, updateProduct } from "../../api/products";
+import { useToastStore } from "../../stores/toast";
+
+const toast = useToastStore();
 
 const props = defineProps({
   // Pass an existing product to edit; omit to create a new one.
@@ -58,6 +61,7 @@ async function handleSubmit() {
       });
     }
 
+    toast.success(props.initial ? "Listing updated." : "Listing created! 🎉");
     router.push({ name: "product-detail", params: { id: response.data.id } });
   } catch (err) {
     errorMessage.value =

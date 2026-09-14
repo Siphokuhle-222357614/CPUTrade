@@ -3,7 +3,9 @@ import { onMounted, ref } from "vue";
 import { getAllUsers, reactivateUser } from "../../api/admin";
 import SuspendUserDialog from "./SuspendUserDialog.vue";
 import { formatDateTime } from "../../utils/datetime";
+import { useToastStore } from "../../stores/toast";
 
+const toast = useToastStore();
 const users = ref([]);
 const loading = ref(true);
 const errorMessage = ref("");
@@ -29,6 +31,7 @@ async function handleReactivate(id) {
     const { data } = await reactivateUser(id);
     const index = users.value.findIndex((u) => u.id === id);
     if (index !== -1) users.value[index] = data;
+    toast.success(`${data.username} reactivated. ✅`);
   } catch (err) {
     errorMessage.value = err.response?.data?.message || "Could not reactivate this account.";
   } finally {

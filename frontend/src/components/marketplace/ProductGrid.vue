@@ -18,5 +18,8 @@ defineProps({
       :style="{ animationDelay: `${Math.min(index, 12) * 35}ms` }"
     />
   </div>
-  <p v-else class="empty-state">No listings here yet — be the first to post one!</p>
+  <p v-else class="empty-state">
+    <span class="empty-state-icon" aria-hidden="true">🔍</span>
+    No listings here yet — be the first to post one!
+  </p>
 </template>

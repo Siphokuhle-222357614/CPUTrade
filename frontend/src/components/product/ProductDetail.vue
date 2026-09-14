@@ -10,6 +10,9 @@ import MarkSoldDialog from "./MarkSoldDialog.vue";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
 import ReportDialog from "../trust/ReportDialog.vue";
 import ConfettiBurst from "../common/ConfettiBurst.vue";
+import { useToastStore } from "../../stores/toast";
+
+const toast = useToastStore();
 
 const props = defineProps({
   product: {
@@ -82,6 +85,7 @@ async function handleDelete() {
   errorMessage.value = "";
   try {
     await deleteProduct(props.product.id);
+    toast.info("Listing deleted.");
     emit("deleted");
     router.push({ name: "marketplace" });
   } catch (err) {
@@ -94,6 +98,7 @@ async function handleDelete() {
 function handleMarkedSold(updated) {
   showMarkSoldDialog.value = false;
   soldBurstKey.value++;
+  toast.success("Marked as sold — nice work! 🎉");
   emit("updated", updated);
 }
 
@@ -102,6 +107,7 @@ async function handleMarkAvailable() {
   errorMessage.value = "";
   try {
     const { data } = await markAvailable(props.product.id);
+    toast.info("Back on the marketplace.");
     emit("updated", data);
   } catch (err) {
     errorMessage.value = err.response?.data?.message || "Could not update this listing.";

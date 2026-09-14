@@ -3,7 +3,9 @@ import { ref, onMounted } from "vue";
 import { dismissReport, listReports, reviewReport } from "../../api/reports";
 import SuspendUserDialog from "./SuspendUserDialog.vue";
 import { formatDateTime } from "../../utils/datetime";
+import { useToastStore } from "../../stores/toast";
 
+const toast = useToastStore();
 const reports = ref([]);
 const loading = ref(true);
 const errorMessage = ref("");
@@ -31,11 +33,12 @@ async function load() {
   }
 }
 
-async function handleAction(id, action) {
+async function handleAction(id, action, successMessage) {
   actingId.value = id;
   try {
     await action(id);
     reports.value = reports.value.filter((r) => r.id !== id);
+    if (successMessage) toast.success(successMessage);
   } catch (err) {
     errorMessage.value = err.response?.data?.message || "Could not update this report.";
   } finally {
@@ -45,6 +48,7 @@ async function handleAction(id, action) {
 
 function handleSuspended() {
   // Suspending is the resolution — mark the report reviewed too so it drops off the queue.
+  // (SuspendUserDialog already toasts the suspension itself, so this stays quiet.)
   const reportId = suspendTarget.value.reportId;
   suspendTarget.value = null;
   handleAction(reportId, reviewReport);
@@ -85,7 +89,7 @@ onMounted(load);
             type="button"
             class="btn btn-outline"
             :disabled="actingId === report.id"
-            @click="handleAction(report.id, dismissReport)"
+            @click="handleAction(report.id, dismissReport, 'Report dismissed.')"
           >
             Dismiss
           </button>
@@ -102,7 +106,7 @@ onMounted(load);
             type="button"
             class="btn btn-primary"
             :disabled="actingId === report.id"
-            @click="handleAction(report.id, reviewReport)"
+            @click="handleAction(report.id, reviewReport, 'Report marked reviewed.')"
           >
             Mark Reviewed
           </button>

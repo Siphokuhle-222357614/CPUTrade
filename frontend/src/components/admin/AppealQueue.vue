@@ -2,7 +2,9 @@
 import { onMounted, ref } from "vue";
 import { approveAppeal, listAppeals, rejectAppeal } from "../../api/appeals";
 import { formatDateTime } from "../../utils/datetime";
+import { useToastStore } from "../../stores/toast";
 
+const toast = useToastStore();
 const appeals = ref([]);
 const loading = ref(true);
 const errorMessage = ref("");
@@ -21,11 +23,12 @@ async function load() {
   }
 }
 
-async function handleAction(id, action) {
+async function handleAction(id, action, successMessage) {
   actingId.value = id;
   try {
     await action(id);
     appeals.value = appeals.value.filter((a) => a.id !== id);
+    if (successMessage) toast.success(successMessage);
   } catch (err) {
     errorMessage.value = err.response?.data?.message || "Could not update this appeal.";
   } finally {
@@ -59,7 +62,7 @@ onMounted(load);
             type="button"
             class="btn btn-outline"
             :disabled="actingId === appeal.id"
-            @click="handleAction(appeal.id, rejectAppeal)"
+            @click="handleAction(appeal.id, rejectAppeal, 'Appeal rejected.')"
           >
             Reject
           </button>
@@ -67,7 +70,7 @@ onMounted(load);
             type="button"
             class="btn btn-accent"
             :disabled="actingId === appeal.id"
-            @click="handleAction(appeal.id, approveAppeal)"
+            @click="handleAction(appeal.id, approveAppeal, `${appeal.username} reactivated. ✅`)"
           >
             Approve &amp; Reactivate
           </button>

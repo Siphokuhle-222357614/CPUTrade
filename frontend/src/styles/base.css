@@ -148,6 +148,12 @@ img {
 /* --- Forms --- */
 .field {
   margin-bottom: var(--space-4);
+  /* Lets a .field shrink/wrap properly when it's a flex item (e.g. the
+     marketplace search/price row) -- without this, a flex item's automatic
+     minimum width defaults to its content's min-content size, and a
+     width:100% input's intrinsic size is wide enough to force horizontal
+     overflow on narrow screens instead of wrapping to a new line. */
+  min-width: 0;
 }
 
 .field label {
@@ -379,6 +385,12 @@ button.card:hover {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  /* A grid item's automatic minimum width also defaults to its content's
+     min-content size -- a long, unbroken title is enough to force the
+     column (and the whole grid) wider than its 1fr share, overflowing the
+     page. This is what let the grid "blow out" on narrow screens. */
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .product-card .thumb {
@@ -669,6 +681,181 @@ button.card:hover {
   100% {
     transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1);
     opacity: 0;
+  }
+}
+
+/* --- Toasts (ToastContainer.vue) --- */
+.toast-stack {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(340px, calc(100vw - var(--space-6)));
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card-hover);
+  background: var(--color-surface);
+  border-left: 4px solid var(--color-primary-light);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.toast-success {
+  border-left-color: var(--color-accent);
+}
+.toast-error {
+  border-left-color: var(--color-danger);
+}
+.toast-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.toast-message {
+  flex: 1;
+  padding-top: 1px;
+}
+.toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  padding: 2px;
+  flex-shrink: 0;
+}
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity var(--transition-base), transform var(--transition-base);
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(28px);
+}
+.toast-leave-active {
+  position: absolute;
+  right: 0;
+  width: 100%;
+}
+
+/* --- Hero band (MarketplaceView) --- */
+.hero-band {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-modal);
+  padding: var(--space-5) var(--space-5);
+  margin-bottom: var(--space-5);
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 55%, var(--color-accent-dark) 130%);
+  box-shadow: var(--shadow-card-hover);
+}
+.hero-band::before {
+  /* A soft, slowly-drifting glow rather than a static flat gradient — the
+     one place in the app that's allowed to feel a little alive on its own,
+     since it's the very first thing anyone sees. */
+  content: "";
+  position: absolute;
+  top: -60%;
+  right: -20%;
+  width: 60%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.55), transparent 70%);
+  animation: hero-drift 10s ease-in-out infinite;
+}
+@keyframes hero-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-6%, 8%) scale(1.15);
+  }
+}
+.hero-band-content {
+  position: relative;
+  z-index: 1;
+}
+.hero-greeting {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: clamp(20px, 3vw, 28px);
+  margin: 0 0 var(--space-1);
+  /* It's an <h1> — needs an explicit override, since the global h1 rule
+     (navy) targets the element directly and always beats inherited color. */
+  color: #fff;
+}
+.hero-subtitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+}
+.hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+}
+.hero-stat strong {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  line-height: 1.1;
+}
+.hero-stat span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* --- A little more presence on primary CTAs --- */
+.btn-primary,
+.btn-accent {
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::after,
+.btn-accent::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+.btn-primary:hover::after,
+.btn-accent:hover::after {
+  transform: translateX(120%);
+}
+
+/* --- Friendlier empty states --- */
+.empty-state {
+  animation: fade-in-up 0.3s ease both;
+}
+.empty-state-icon {
+  display: block;
+  font-size: 32px;
+  margin-bottom: var(--space-2);
+  animation: gentle-pulse 2.4s ease-in-out infinite;
+}
+
+@media (max-width: 480px) {
+  .toast-stack {
+    top: var(--space-3);
+    right: var(--space-3);
+  }
+  .hero-band {
+    padding: var(--space-4);
   }
 }
 

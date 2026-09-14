@@ -2,11 +2,13 @@
 import { useRoute } from "vue-router";
 import NavBar from "./components/layout/NavBar.vue";
 import InstallPrompt from "./components/layout/InstallPrompt.vue";
+import ToastContainer from "./components/common/ToastContainer.vue";
 
 const route = useRoute();
 </script>
 
 <template>
+  <ToastContainer />
   <InstallPrompt />
   <NavBar />
   <main class="page">
