@@ -297,20 +297,27 @@ button.card:hover {
   animation: pop-in 0.4s var(--ease-spring) both;
 }
 
-/* --- Nav bar --- */
+/* --- Nav bar ---
+   Mobile-first: only the brand + a hamburger show by default; the full
+   link set and the "me" dropdown only appear at >=768px. A phone gets one
+   deliberate menu instead of every link fighting for space and wrapping
+   onto its own ragged row. */
 .navbar {
   background: var(--color-primary);
   color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 2px 8px rgba(14, 32, 64, 0.25);
+}
+.navbar-inner {
+  max-width: 1100px;
+  margin: 0 auto;
   padding: var(--space-3) var(--space-4);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  flex-wrap: wrap;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  box-shadow: 0 2px 8px rgba(14, 32, 64, 0.25);
 }
 .navbar a {
   color: rgba(255, 255, 255, 0.85);
@@ -326,12 +333,17 @@ button.card:hover {
   font-weight: 700;
   font-size: 18px;
   color: #fff;
+  display: inline-block;
+  transition: transform var(--transition-base);
 }
-.navbar-links {
-  display: flex;
+.navbar .brand:hover {
+  transform: rotate(-4deg) scale(1.05);
+}
+
+.navbar-links-desktop {
+  display: none;
   align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
+  gap: var(--space-4);
 }
 
 .navbar .btn-outline {
@@ -345,6 +357,208 @@ button.card:hover {
 }
 .navbar .btn-accent:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+/* Nav links get a sliding underline instead of just a color swap. */
+.navbar-links a {
+  position: relative;
+}
+.navbar-links a:not(.btn)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-base);
+}
+.navbar-links a:not(.btn):hover::after,
+.navbar-links a:not(.btn).router-link-active::after {
+  transform: scaleX(1);
+}
+
+.navbar-icon-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font-size: 18px;
+  line-height: 1;
+}
+.navbar-icon-link .badge {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+}
+
+/* --- Avatar + "me" dropdown (replaces a bare username + logout button) --- */
+.navbar-user-menu {
+  position: relative;
+}
+.navbar-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+.navbar-avatar:hover {
+  background: rgba(255, 255, 255, 0.28);
+  transform: scale(1.05);
+}
+.navbar-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 190px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-modal);
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  z-index: 60;
+}
+.navbar-dropdown-handle {
+  margin: 0 0 var(--space-1);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  word-break: break-all;
+}
+.navbar-dropdown a,
+.navbar-dropdown button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-input);
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.navbar-dropdown a:hover,
+.navbar-dropdown button:hover {
+  background: var(--color-bg);
+}
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.97);
+}
+
+/* --- Hamburger toggle (mobile only) --- */
+.navbar-burger {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 30px;
+  height: 30px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.navbar-burger span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: #fff;
+  border-radius: 2px;
+  transition: transform var(--transition-base), opacity var(--transition-base);
+}
+.navbar-burger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.navbar-burger.open span:nth-child(2) {
+  opacity: 0;
+}
+.navbar-burger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* --- Mobile slide-down panel --- */
+.navbar-mobile-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  background: var(--color-primary-dark);
+}
+.navbar-mobile-panel a,
+.navbar-mobile-panel button {
+  padding: var(--space-3);
+  border-radius: var(--radius-input);
+}
+.navbar-mobile-panel a:hover,
+.navbar-mobile-panel a.router-link-active {
+  background: rgba(255, 255, 255, 0.08);
+}
+.navbar-mobile-account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  margin-top: var(--space-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+.navbar-mobile-account span {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  word-break: break-all;
+}
+.mobile-menu-enter-active,
+.mobile-menu-leave-active {
+  transition: max-height var(--transition-base), opacity var(--transition-base);
+  overflow: hidden;
+}
+.mobile-menu-enter-from,
+.mobile-menu-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+.mobile-menu-enter-to,
+.mobile-menu-leave-from {
+  max-height: 480px;
+  opacity: 1;
+}
+
+@media (min-width: 768px) {
+  .navbar-links-desktop {
+    display: flex;
+  }
+  .navbar-burger,
+  .navbar-mobile-panel {
+    display: none;
+  }
 }
 
 /* --- Category pill row (horizontal scroll on mobile) --- */
@@ -585,35 +799,6 @@ button.card:hover {
    than a static number, without being an annoying strobe. */
 .navbar-badge-pulse {
   animation: gentle-pulse 2s ease-in-out infinite;
-}
-
-/* Nav links get a sliding underline instead of just a color swap. */
-.navbar-links a {
-  position: relative;
-}
-.navbar-links a:not(.btn)::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -4px;
-  height: 2px;
-  background: currentColor;
-  border-radius: 2px;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--transition-base);
-}
-.navbar-links a:not(.btn):hover::after,
-.navbar-links a:not(.btn).router-link-active::after {
-  transform: scaleX(1);
-}
-.navbar .brand {
-  display: inline-block;
-  transition: transform var(--transition-base);
-}
-.navbar .brand:hover {
-  transform: rotate(-4deg) scale(1.05);
 }
 
 /* Chat: message bubbles arrive, they don't just appear (only plays once per
