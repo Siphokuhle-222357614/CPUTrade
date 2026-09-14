@@ -3,6 +3,7 @@ package za.ac.cput.cputrade.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -14,8 +15,14 @@ import java.util.function.Function;
  * Signs and parses the JWTs used for stateless authentication (US1.4: 24-hour
  * expiry by default, configurable via {@code jwt.expiration-ms}).
  */
+@Slf4j
 @Component
 public class JwtUtil {
+
+    // Must match the fallback in application.properties — checked below so a
+    // deployment that forgot to set JWT_SECRET fails loudly instead of
+    // silently signing tokens with a secret that's sitting in this repo.
+    private static final String DEV_DEFAULT_SECRET = "cputrade-dev-secret-change-me-before-any-real-deployment-01234567";
 
     private final SecretKey signingKey;
     private final long expirationMs;
@@ -24,6 +31,10 @@ public class JwtUtil {
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.expiration-ms:86400000}") long expirationMs
     ) {
+        if (DEV_DEFAULT_SECRET.equals(secret)) {
+            log.warn("*** Using the built-in dev-only JWT secret. Set the JWT_SECRET environment variable " +
+                    "before running this anywhere but localhost — see DEPLOYMENT.md. ***");
+        }
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes());
         this.expirationMs = expirationMs;
     }

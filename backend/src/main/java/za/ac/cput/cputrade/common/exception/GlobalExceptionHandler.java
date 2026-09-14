@@ -1,6 +1,7 @@
 package za.ac.cput.cputrade.common.exception;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,6 +17,7 @@ import java.util.Map;
  * Central error mapping so controllers don't need try/catch — every handler
  * here returns a consistent JSON error shape.
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -46,6 +48,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleUnexpected(Exception ex) {
+        // Full stack trace goes to the server log only — the client only ever
+        // sees the generic message below, never internals (query text, stack
+        // frames, class names) that could help an attacker.
+        log.error("Unhandled exception", ex);
         return body(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
     }
 
