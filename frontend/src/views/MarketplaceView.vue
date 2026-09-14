@@ -5,13 +5,16 @@ import SearchAndPriceFilter from "../components/marketplace/SearchAndPriceFilter
 import ProductGrid from "../components/marketplace/ProductGrid.vue";
 import SkeletonCard from "../components/common/SkeletonCard.vue";
 import { listProducts } from "../api/products";
+import { createSavedSearch } from "../api/savedSearches";
 import { loadCache, saveCache } from "../utils/offlineCache";
 import { formatDayLabel } from "../utils/datetime";
 import { useAuthStore } from "../stores/auth";
+import { useToastStore } from "../stores/toast";
 
 const CACHE_KEY = "marketplace_all";
 
 const auth = useAuthStore();
+const toast = useToastStore();
 const category = ref(null);
 const keyword = ref("");
 const minPrice = ref("");
@@ -20,6 +23,29 @@ const products = ref([]);
 const loading = ref(true);
 const errorMessage = ref("");
 const offline = ref(false);
+const savingSearch = ref(false);
+
+// Mirrors SavedSearchService's own validation -- an alert needs at least one
+// criterion, or it'd fire on literally every new listing. minPrice isn't
+// part of the alert (an alert is "tell me when something shows up", and a
+// minimum price doesn't narrow that down in a way worth matching on).
+const canSaveSearch = computed(() => auth.isAuthenticated && !!(category.value || keyword.value.trim() || maxPrice.value));
+
+async function saveCurrentSearch() {
+  savingSearch.value = true;
+  try {
+    await createSavedSearch({
+      category: category.value,
+      keyword: keyword.value.trim() || null,
+      maxPrice: maxPrice.value || null,
+    });
+    toast.success("Saved! We'll notify you when a matching listing is posted.");
+  } catch (err) {
+    toast.error(err.response?.data?.message || "Could not save this search.");
+  } finally {
+    savingSearch.value = false;
+  }
+}
 
 let debounceTimer = null;
 
@@ -117,6 +143,11 @@ const heroStats = computed(() => {
 
   <CategoryFilterPills v-model="category" />
   <SearchAndPriceFilter v-model:keyword="keyword" v-model:min-price="minPrice" v-model:max-price="maxPrice" />
+  <div v-if="canSaveSearch" class="row" style="justify-content: flex-end; margin: calc(var(--space-4) * -1) 0 var(--space-4)">
+    <button type="button" class="btn btn-outline btn-sm" :disabled="savingSearch" @click="saveCurrentSearch">
+      🔔 {{ savingSearch ? "Saving…" : "Notify me about listings like this" }}
+    </button>
+  </div>
   <p v-if="offline" class="alert alert-info">
     You're offline — showing listings cached from your last visit. They may be out of date.
   </p>

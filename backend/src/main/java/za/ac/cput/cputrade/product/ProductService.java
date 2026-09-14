@@ -17,6 +17,8 @@ import za.ac.cput.cputrade.storage.ImageStorageService;
 import za.ac.cput.cputrade.user.Role;
 import za.ac.cput.cputrade.user.User;
 import za.ac.cput.cputrade.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
@@ -33,6 +35,8 @@ import java.util.Map;
 @Service
 public class ProductService {
 
+    private static final Logger log = LoggerFactory.getLogger(ProductService.class);
+
     /** Hard cap on photos per listing — generous for a resale marketplace, stingy enough to bound storage/abuse. */
     private static final int MAX_IMAGES_PER_PRODUCT = 6;
 
@@ -43,11 +47,12 @@ public class ProductService {
     private final ImageStorageService imageStorageService;
     private final WishlistItemRepository wishlistItemRepository;
     private final NotificationService notificationService;
+    private final SavedSearchService savedSearchService;
 
     public ProductService(ProductRepository productRepository, UserRepository userRepository,
                            ConversationRepository conversationRepository, RatingService ratingService,
                            ImageStorageService imageStorageService, WishlistItemRepository wishlistItemRepository,
-                           NotificationService notificationService) {
+                           NotificationService notificationService, SavedSearchService savedSearchService) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.conversationRepository = conversationRepository;
@@ -55,6 +60,7 @@ public class ProductService {
         this.imageStorageService = imageStorageService;
         this.wishlistItemRepository = wishlistItemRepository;
         this.notificationService = notificationService;
+        this.savedSearchService = savedSearchService;
     }
 
     /** US3.1 category, US3.2 keyword, US3.3 price range — any combination, all optional. */
@@ -124,7 +130,14 @@ public class ProductService {
                 .active(true)
                 .build();
 
-        return toResponse(productRepository.save(product));
+        Product saved = productRepository.save(product);
+        try {
+            savedSearchService.notifyMatchingSavedSearches(saved);
+        } catch (Exception e) {
+            // A saved-search alert failing must never roll back the listing it was checking.
+            log.warn("Could not check saved searches for new product {}", saved.getId(), e);
+        }
+        return toResponse(saved);
     }
 
     @Transactional
@@ -284,7 +297,13 @@ public class ProductService {
     /** Notifies everyone watching this listing, except the seller themselves (can't wishlist your own listing anyway). */
     private void notifyWishlisters(Product product, NotificationType type, String message) {
         for (WishlistItem item : wishlistItemRepository.findByProductId(product.getId())) {
-            notificationService.create(item.getUser(), type, message, "/products/" + product.getId());
+            try {
+                notificationService.create(item.getUser(), type, message, "/products/" + product.getId());
+            } catch (Exception e) {
+                // A notification failure (for one watcher, or all of them) must never roll
+                // back the price-drop/mark-sold update this runs inside of.
+                log.warn("Could not notify wishlist watcher {} about product {}", item.getUser().getId(), product.getId(), e);
+            }
         }
     }
 

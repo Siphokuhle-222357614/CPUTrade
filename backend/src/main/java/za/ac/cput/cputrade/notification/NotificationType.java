@@ -8,5 +8,7 @@ public enum NotificationType {
     /** A listing on the recipient's wishlist just got cheaper. */
     PRICE_DROP,
     /** A listing on the recipient's wishlist was marked sold by someone else. */
-    WISHLIST_ITEM_SOLD
+    WISHLIST_ITEM_SOLD,
+    /** A freshly-posted listing matches one of the recipient's saved search alerts. */
+    SAVED_SEARCH_MATCH
 }
