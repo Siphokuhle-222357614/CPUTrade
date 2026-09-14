@@ -56,6 +56,24 @@ this project's scale, but if this app ever gets a second environment (staging
 schema changes are reviewable and repeatable instead of inferred by Hibernate
 on boot.
 
+**One-time data migration (multi-photo listings)**: the commit that added
+multiple photos per listing replaced the single `products.image_url` column
+with a separate `product_images` table. Hibernate's `ddl-auto=update` creates
+that new table automatically, but it does **not** copy any existing photos
+into it — on any database that already has listings with a photo, run this
+once after deploying that change (harmless to run twice; it skips products
+that already have rows in `product_images`):
+
+```sql
+INSERT INTO product_images (product_id, sort_order, image_url)
+SELECT id, 0, image_url FROM products
+WHERE image_url IS NOT NULL AND image_url != ''
+AND id NOT IN (SELECT DISTINCT product_id FROM product_images);
+```
+
+Without this, older listings won't show their photo until the seller
+re-adds one — the file on disk is untouched, it's just not linked up.
+
 ## 3. Backend
 
 ```bash
