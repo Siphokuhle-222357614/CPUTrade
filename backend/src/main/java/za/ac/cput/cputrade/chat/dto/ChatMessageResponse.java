@@ -16,9 +16,15 @@ public class ChatMessageResponse {
     private Long conversationId;
     private Long senderId;
     private String senderUsername;
+    /** Null when {@code deleted} is true — the real content never leaves the backend once deleted. */
     private String body;
     private LocationSuggestion locationSuggestion;
     private LocalDateTime createdAt;
+    private boolean edited;
+    private LocalDateTime editedAt;
+    private boolean deleted;
+    private LocalDateTime deliveredAt;
+    private LocalDateTime readAt;
 
     public static ChatMessageResponse from(ChatMessage message) {
         return ChatMessageResponse.builder()
@@ -26,9 +32,14 @@ public class ChatMessageResponse {
                 .conversationId(message.getConversation().getId())
                 .senderId(message.getSender().getId())
                 .senderUsername(message.getSender().getUsername())
-                .body(message.getBody())
-                .locationSuggestion(message.getLocationSuggestion())
+                .body(message.isDeleted() ? null : message.getBody())
+                .locationSuggestion(message.isDeleted() ? null : message.getLocationSuggestion())
                 .createdAt(message.getCreatedAt())
+                .edited(message.isEdited())
+                .editedAt(message.getEditedAt())
+                .deleted(message.isDeleted())
+                .deliveredAt(message.getDeliveredAt())
+                .readAt(message.getReadAt())
                 .build();
     }
 }

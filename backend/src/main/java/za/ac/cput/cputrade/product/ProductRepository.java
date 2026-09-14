@@ -12,4 +12,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     /** A seller's own "My Listings" / business dashboard view — includes their own inactive listings too. */
     List<Product> findBySellerIdOrderByCreatedAtDesc(Long sellerId);
+
+    /** Shown on a user's public profile — active listings only. */
+    long countBySellerIdAndActiveTrue(Long sellerId);
 }

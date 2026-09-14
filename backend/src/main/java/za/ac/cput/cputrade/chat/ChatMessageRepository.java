@@ -7,4 +7,9 @@ import java.util.List;
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
     List<ChatMessage> findByConversationIdOrderByCreatedAtAsc(Long conversationId);
+
+    /** Messages in this thread sent by someone else, not yet delivered/read — used to update ticks. */
+    List<ChatMessage> findByConversationIdAndSenderIdNotAndDeliveredAtIsNull(Long conversationId, Long senderId);
+
+    List<ChatMessage> findByConversationIdAndSenderIdNotAndReadAtIsNull(Long conversationId, Long senderId);
 }

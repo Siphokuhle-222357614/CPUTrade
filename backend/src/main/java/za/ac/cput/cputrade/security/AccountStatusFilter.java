@@ -22,13 +22,14 @@ import za.ac.cput.cputrade.user.UserRepository;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 /**
- * Two account-level rules that apply on <em>every</em> authenticated
+ * Three account-level things that happen on <em>every</em> authenticated
  * request, not just at login:
  *
  * <ol>
@@ -40,6 +41,10 @@ import java.util.Set;
  *       listings." A short allowlist covers self-service actions (reading
  *       notifications, blocking a harasser, appealing) that aren't "running
  *       a business" and so don't need to wait on approval.</li>
+ *   <li>{@code lastActiveAt} is touched (throttled to once per ~20s per
+ *       user) — this filter already loads the user row on every request
+ *       anyway, so presence ("online" = active in the last minute) piggybacks
+ *       on that instead of needing a dedicated heartbeat endpoint.</li>
  * </ol>
  *
  * <p>Runs after {@link JwtAuthFilter} so the SecurityContext is already
@@ -92,10 +97,21 @@ public class AccountStatusFilter extends OncePerRequestFilter {
                             "Your vendor account is pending admin approval — you can browse, but can't make changes yet.");
                     return;
                 }
+
+                touchLastActive(user);
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /** Throttled so an active user isn't triggering a write on every single request. */
+    private void touchLastActive(User user) {
+        LocalDateTime now = LocalDateTime.now();
+        if (user.getLastActiveAt() == null || user.getLastActiveAt().isBefore(now.minusSeconds(20))) {
+            user.setLastActiveAt(now);
+            userRepository.save(user);
+        }
     }
 
     private void writeError(HttpServletResponse response, String message) throws IOException {

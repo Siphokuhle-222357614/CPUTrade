@@ -31,3 +31,46 @@ export function localInputToBackend(datetimeLocalValue) {
   if (!datetimeLocalValue) return null;
   return datetimeLocalValue.length === 16 ? `${datetimeLocalValue}:00` : datetimeLocalValue;
 }
+
+/** "16:45" — just the clock time, for a chat message bubble. */
+export function formatTime(value) {
+  const match = /T(\d{2}):(\d{2})/.exec(value || "");
+  return match ? `${match[1]}:${match[2]}` : "";
+}
+
+/** The "2026-09-14" portion, used to group messages by day. */
+export function dateKey(value) {
+  return (value || "").slice(0, 10);
+}
+
+// "now" is a real absolute instant (unlike a zone-less timestamp string),
+// so converting it into Johannesburg's civil date via Intl is genuinely
+// timezone-safe — this is not the same ambiguous parsing this file
+// otherwise avoids. en-CA formats as YYYY-MM-DD.
+const JOBURG_DAY_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Africa/Johannesburg",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+function johannesburgTodayKey(daysAgo = 0) {
+  const instant = new Date(Date.now() - daysAgo * 86400000);
+  return JOBURG_DAY_FORMATTER.format(instant);
+}
+
+/** "Today" / "Yesterday" / "14 September 2026" — a day divider label, chat-app style. */
+export function formatDayLabel(value) {
+  const key = dateKey(value);
+  if (!key) return "";
+
+  if (key === johannesburgTodayKey(0)) return "Today";
+  if (key === johannesburgTodayKey(1)) return "Yesterday";
+
+  const FULL_MONTHS = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ];
+  const [year, month, day] = key.split("-");
+  return `${Number(day)} ${FULL_MONTHS[Number(month) - 1]} ${year}`;
+}

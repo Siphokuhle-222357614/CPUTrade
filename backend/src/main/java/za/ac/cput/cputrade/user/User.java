@@ -92,6 +92,15 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Updated (throttled) on every authenticated request by
+     * {@code AccountStatusFilter}, which already loads this row per
+     * request — "online" is just this being recent (see
+     * {@code UserProfileService#isOnline}), not a real presence channel.
+     */
+    @Column(name = "last_active_at")
+    private LocalDateTime lastActiveAt;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

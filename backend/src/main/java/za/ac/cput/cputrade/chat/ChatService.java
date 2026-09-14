@@ -1,5 +1,6 @@
 package za.ac.cput.cputrade.chat;
 
+import za.ac.cput.cputrade.chat.dto.ChatMessageEditRequest;
 import za.ac.cput.cputrade.chat.dto.ChatMessageRequest;
 import za.ac.cput.cputrade.chat.dto.ChatMessageResponse;
 import za.ac.cput.cputrade.chat.dto.ConversationResponse;
@@ -15,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -26,16 +28,19 @@ public class ChatService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final BlockService blockService;
+    private final TypingIndicatorService typingIndicatorService;
 
     public ChatService(ConversationRepository conversationRepository, ChatMessageRepository chatMessageRepository,
                         ProductRepository productRepository, UserRepository userRepository,
-                        NotificationService notificationService, BlockService blockService) {
+                        NotificationService notificationService, BlockService blockService,
+                        TypingIndicatorService typingIndicatorService) {
         this.conversationRepository = conversationRepository;
         this.chatMessageRepository = chatMessageRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.blockService = blockService;
+        this.typingIndicatorService = typingIndicatorService;
     }
 
     /** Shared by both entry points into a conversation — a block in either direction stops messaging. */
@@ -79,10 +84,97 @@ public class ChatService {
         return ConversationResponse.from(requireParticipant(conversationId, auth));
     }
 
+    @Transactional
     public List<ChatMessageResponse> messages(Long conversationId, Authentication auth) {
         Conversation conversation = requireParticipant(conversationId, auth);
+        User viewer = currentUser(auth);
+
+        // Fetching the thread is what "delivered" means in a poll-based chat
+        // (no push channel to know the moment their client actually got it) —
+        // any message from the other party not yet marked delivered becomes
+        // delivered now, the single check becoming a double check.
+        List<ChatMessage> undelivered = chatMessageRepository
+                .findByConversationIdAndSenderIdNotAndDeliveredAtIsNull(conversationId, viewer.getId());
+        if (!undelivered.isEmpty()) {
+            LocalDateTime now = LocalDateTime.now();
+            undelivered.forEach(m -> m.setDeliveredAt(now));
+            chatMessageRepository.saveAll(undelivered);
+        }
+
         return chatMessageRepository.findByConversationIdOrderByCreatedAtAsc(conversation.getId())
                 .stream().map(ChatMessageResponse::from).toList();
+    }
+
+    /** The viewer has the conversation open — every message from the other party becomes "seen" (blue double check). */
+    @Transactional
+    public void markRead(Long conversationId, Authentication auth) {
+        Conversation conversation = requireParticipant(conversationId, auth);
+        User viewer = currentUser(auth);
+
+        List<ChatMessage> unread = chatMessageRepository
+                .findByConversationIdAndSenderIdNotAndReadAtIsNull(conversation.getId(), viewer.getId());
+        if (unread.isEmpty()) return;
+
+        LocalDateTime now = LocalDateTime.now();
+        unread.forEach(m -> {
+            m.setReadAt(now);
+            if (m.getDeliveredAt() == null) m.setDeliveredAt(now); // seen implies delivered
+        });
+        chatMessageRepository.saveAll(unread);
+    }
+
+    @Transactional
+    public ChatMessageResponse editMessage(Long conversationId, Long messageId, ChatMessageEditRequest request, Authentication auth) {
+        User user = currentUser(auth);
+        ChatMessage message = requireOwnMessage(conversationId, messageId, user);
+        if (message.isDeleted()) {
+            throw ApiException.badRequest("Can't edit a deleted message");
+        }
+        message.setBody(request.getBody());
+        message.setEdited(true);
+        message.setEditedAt(LocalDateTime.now());
+        return ChatMessageResponse.from(chatMessageRepository.save(message));
+    }
+
+    /**
+     * Soft delete — {@code body} is left untouched in the database (see
+     * {@link ChatMessage#isDeleted()}); only the {@code deleted} flag is
+     * set, which is all {@link ChatMessageResponse} checks before deciding
+     * whether to expose the real content.
+     */
+    @Transactional
+    public void deleteMessage(Long conversationId, Long messageId, Authentication auth) {
+        User user = currentUser(auth);
+        ChatMessage message = requireOwnMessage(conversationId, messageId, user);
+        message.setDeleted(true);
+        chatMessageRepository.save(message);
+    }
+
+    public void markTyping(Long conversationId, Authentication auth) {
+        Conversation conversation = requireParticipant(conversationId, auth);
+        User user = currentUser(auth);
+        typingIndicatorService.markTyping(conversation.getId(), user.getId());
+    }
+
+    public boolean isOtherPartyTyping(Long conversationId, Authentication auth) {
+        Conversation conversation = requireParticipant(conversationId, auth);
+        User user = currentUser(auth);
+        Long otherId = conversation.getBuyer().getId().equals(user.getId())
+                ? conversation.getSeller().getId()
+                : conversation.getBuyer().getId();
+        return typingIndicatorService.isTyping(conversation.getId(), otherId);
+    }
+
+    private ChatMessage requireOwnMessage(Long conversationId, Long messageId, User user) {
+        ChatMessage message = chatMessageRepository.findById(messageId)
+                .orElseThrow(() -> ApiException.notFound("Message not found"));
+        if (!message.getConversation().getId().equals(conversationId)) {
+            throw ApiException.notFound("Message not found");
+        }
+        if (!message.getSender().getId().equals(user.getId())) {
+            throw ApiException.forbidden("You may only edit or delete your own messages");
+        }
+        return message;
     }
 
     @Transactional
