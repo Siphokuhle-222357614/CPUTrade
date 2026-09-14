@@ -2,6 +2,7 @@
 import { reactive, ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "../../stores/auth";
+import SuspendedAccountDialog from "./SuspendedAccountDialog.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -11,7 +12,8 @@ const mode = ref("login"); // "login" | "register"
 const loading = ref(false);
 const errorMessage = ref("");
 const infoMessage = ref("");
-const isSuspended = ref(false);
+const showSuspendedDialog = ref(false);
+const suspendedMessage = ref("");
 
 const form = reactive({
   username: "",
@@ -23,7 +25,6 @@ const form = reactive({
 function resetMessages() {
   errorMessage.value = "";
   infoMessage.value = "";
-  isSuspended.value = false;
 }
 
 async function handleSubmit() {
@@ -47,9 +48,16 @@ async function handleSubmit() {
       router.push(route.query.redirect || { name: "marketplace" });
     }
   } catch (err) {
-    errorMessage.value =
-      err.response?.data?.message || "Something went wrong — please try again.";
-    isSuspended.value = err.response?.status === 403 && errorMessage.value.toLowerCase().includes("suspended");
+    const message = err.response?.data?.message || "Something went wrong — please try again.";
+    const suspended = err.response?.status === 403 && message.toLowerCase().includes("suspended");
+    if (suspended) {
+      // A suspension is important enough to interrupt with a popup rather
+      // than blend into the usual inline error banner.
+      suspendedMessage.value = message;
+      showSuspendedDialog.value = true;
+    } else {
+      errorMessage.value = message;
+    }
   } finally {
     loading.value = false;
   }
@@ -79,12 +87,7 @@ async function handleSubmit() {
       </button>
     </div>
 
-    <p v-if="errorMessage" class="alert alert-error">
-      {{ errorMessage }}
-      <router-link v-if="isSuspended" :to="{ name: 'appeal', query: { username: form.username } }" style="color: inherit; font-weight: 700">
-        Submit an appeal →
-      </router-link>
-    </p>
+    <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
     <p v-if="infoMessage" class="alert alert-info">{{ infoMessage }}</p>
 
     <form @submit.prevent="handleSubmit">
@@ -141,5 +144,12 @@ async function handleSubmit() {
         {{ loading ? "Please wait…" : mode === "login" ? "Sign In" : "Create Account" }}
       </button>
     </form>
+
+    <SuspendedAccountDialog
+      :open="showSuspendedDialog"
+      :message="suspendedMessage"
+      :username="form.username"
+      @close="showSuspendedDialog = false"
+    />
   </div>
 </template>
