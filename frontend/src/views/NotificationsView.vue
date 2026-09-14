@@ -2,6 +2,7 @@
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { listNotifications, markAllNotificationsRead, markNotificationRead } from "../api/notifications";
+import { formatDateTime } from "../utils/datetime";
 
 const router = useRouter();
 const notifications = ref([]);
@@ -45,7 +46,7 @@ async function handleMarkAllRead() {
 }
 
 function formatDate(value) {
-  return new Date(value).toLocaleString();
+  return formatDateTime(value);
 }
 
 const typeIcons = {

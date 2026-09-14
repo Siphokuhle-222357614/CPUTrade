@@ -20,7 +20,7 @@ still boot without them (falling back to the dev-only values in
 | Variable | Purpose | Example |
 |---|---|---|
 | `JWT_SECRET` | Signs/verifies login tokens. Generate a real one — never reuse the value committed in this repo. | `openssl rand -base64 48` |
-| `DB_URL` | JDBC URL of your production MySQL. | `jdbc:mysql://db-host:3306/cputrade?useSSL=true&serverTimezone=UTC` |
+| `DB_URL` | JDBC URL of your production MySQL. | `jdbc:mysql://db-host:3306/cputrade?useSSL=true&serverTimezone=Africa/Johannesburg` |
 | `DB_USERNAME` | MySQL app user (not root). | `cputrade_app` |
 | `DB_PASSWORD` | That user's password. | — |
 | `CORS_ALLOWED_ORIGIN` | The exact origin your deployed frontend is served from (no trailing slash). | `https://cputrade.example.com` |
@@ -30,6 +30,16 @@ Set these however your host expects (platform dashboard, `systemd`
 `Environment=` lines, a `.env` file read by your process manager — Spring
 Boot itself doesn't read `.env` files, so if you use one, load it into the
 shell environment before starting the jar).
+
+**Timezone**: this app is CPUT-only and single-region, so it deliberately
+hardcodes `Africa/Johannesburg` (GMT+2, no DST) as the JVM's default
+timezone in `CpuTradeBackendApplication.main()` — every timestamp is that
+wall-clock time, everywhere this runs, regardless of what timezone the host
+machine/container itself defaults to (most cloud hosts default to UTC,
+which would otherwise silently shift every timestamp two hours). There's
+nothing to configure for this; don't "fix" a timestamp that looks off by
+changing server/OS timezone settings instead — check `serverTimezone` in
+`DB_URL` matches instead.
 
 ## 2. Database
 

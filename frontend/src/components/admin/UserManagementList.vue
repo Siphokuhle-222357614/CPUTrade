@@ -2,6 +2,7 @@
 import { onMounted, ref } from "vue";
 import { getAllUsers, reactivateUser } from "../../api/admin";
 import SuspendUserDialog from "./SuspendUserDialog.vue";
+import { formatDateTime } from "../../utils/datetime";
 
 const users = ref([]);
 const loading = ref(true);
@@ -41,7 +42,7 @@ function handleSuspended() {
 }
 
 function formatDate(value) {
-  return value ? new Date(value).toLocaleString() : null;
+  return formatDateTime(value);
 }
 
 onMounted(load);

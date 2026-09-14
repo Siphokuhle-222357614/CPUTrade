@@ -4,6 +4,7 @@ import { useAuthStore } from "../../stores/auth";
 import { deleteBulletinPost } from "../../api/bulletin";
 import ConfirmDialog from "../common/ConfirmDialog.vue";
 import ReportDialog from "../trust/ReportDialog.vue";
+import { formatDateTime } from "../../utils/datetime";
 
 const props = defineProps({
   post: {
@@ -37,7 +38,7 @@ async function handleDelete() {
 }
 
 function formatDate(value) {
-  return new Date(value).toLocaleString();
+  return formatDateTime(value);
 }
 </script>
 

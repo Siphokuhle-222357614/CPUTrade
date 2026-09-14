@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { dismissReport, listReports, reviewReport } from "../../api/reports";
 import SuspendUserDialog from "./SuspendUserDialog.vue";
+import { formatDateTime } from "../../utils/datetime";
 
 const reports = ref([]);
 const loading = ref(true);
@@ -50,7 +51,7 @@ function handleSuspended() {
 }
 
 function formatDate(value) {
-  return new Date(value).toLocaleString();
+  return formatDateTime(value);
 }
 
 onMounted(load);

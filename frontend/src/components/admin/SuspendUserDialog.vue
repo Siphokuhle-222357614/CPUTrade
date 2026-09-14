@@ -2,6 +2,7 @@
 import { reactive, ref, watch } from "vue";
 import Modal from "../common/Modal.vue";
 import { suspendUser } from "../../api/admin";
+import { localInputToBackend } from "../../utils/datetime";
 
 const props = defineProps({
   open: {
@@ -40,7 +41,11 @@ async function handleSubmit() {
   try {
     await suspendUser(props.userId, {
       reason: form.reason || null,
-      suspendedUntil: form.suspendedUntil ? new Date(form.suspendedUntil).toISOString() : null,
+      // Sent as the literal wall-clock value the admin typed — never
+      // round-tripped through new Date(...).toISOString(), which converts
+      // through UTC and silently shifts it by two hours (this app's clock
+      // is always Africa/Johannesburg; see utils/datetime.js).
+      suspendedUntil: localInputToBackend(form.suspendedUntil),
     });
     emit("suspended");
   } catch (err) {

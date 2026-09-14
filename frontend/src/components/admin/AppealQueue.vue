@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { approveAppeal, listAppeals, rejectAppeal } from "../../api/appeals";
+import { formatDateTime } from "../../utils/datetime";
 
 const appeals = ref([]);
 const loading = ref(true);
@@ -33,7 +34,7 @@ async function handleAction(id, action) {
 }
 
 function formatDate(value) {
-  return new Date(value).toLocaleString();
+  return formatDateTime(value);
 }
 
 onMounted(load);
