@@ -1,0 +1,30 @@
+/* Design tokens from the CPUTrade design system (Term 2 doc, section 4.1). */
+:root {
+  --color-primary: #1f3864; /* deep navy — headers, buttons, nav bar */
+  --color-primary-dark: #162a4a;
+  --color-accent: #1a6b5a; /* teal — CTAs, success states, Freecycle badge */
+  --color-accent-dark: #124f42;
+  --color-bg: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-text: #2c3e50;
+  --color-text-muted: #6b7a8d;
+  --color-border: #e1e6ec;
+  --color-danger: #b3261e;
+  --color-danger-bg: #fdecea;
+  --color-warning-bg: #fff4e5;
+  --color-warning-text: #8a5a00;
+
+  --radius-card: 8px;
+  --radius-input: 4px;
+  --radius-pill: 24px;
+
+  --font-heading: "Roboto", system-ui, sans-serif;
+  --font-body: "Open Sans", system-ui, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+}
