@@ -1032,7 +1032,17 @@ button.card:hover {
   animation: fade-in-up 0.3s ease both;
 }
 .empty-state-icon {
-  display: block;
+  /* Was "display: block", which stretches to the full width of .empty-state
+     (its parent) since a block box with no explicit width fills its
+     container. That's invisible while the icon sits still, but the
+     gentle-pulse scale animation below transforms that whole full-width box
+     around its center, periodically pushing both edges past the viewport
+     and causing a real (if brief, twice per 2.4s cycle) horizontal
+     scrollbar -- confirmed by sampling getBoundingClientRect() across the
+     animation. inline-block sizes the box to the glyph itself instead, so
+     scaling it stays contained; text-align:center on .empty-state still
+     centers it exactly as before. */
+  display: inline-block;
   font-size: 32px;
   margin-bottom: var(--space-2);
   animation: gentle-pulse 2.4s ease-in-out infinite;
