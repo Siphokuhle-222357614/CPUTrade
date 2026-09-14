@@ -7,14 +7,22 @@ import { NavigationRoute, registerRoute } from "workbox-routing";
 import { StaleWhileRevalidate } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 
-// Injected by vite-plugin-pwa at build time with the app-shell file list.
-precacheAndRoute(self.__WB_MANIFEST);
+// Injected by vite-plugin-pwa at build time with the app-shell file list —
+// empty in dev (devOptions doesn't precache anything, it just registers this
+// SW so push/notificationclick can be exercised under `npm run dev`).
+const precacheManifest = self.__WB_MANIFEST;
+precacheAndRoute(precacheManifest);
 
 // SPA offline fallback: any navigation not otherwise handled falls back to
 // the cached index.html so client-side routing still works offline, except
 // /api/** (which was never a navigation target anyway, but mirrors the
 // denylist the previous generateSW config had for the same reason).
-registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html"), { denylist: [/^\/api\//] }));
+// Guarded on a non-empty manifest -- createHandlerBoundToURL throws
+// synchronously (crashing the whole SW's evaluation) if "index.html" isn't
+// actually a precache entry, which is exactly the case in dev.
+if (precacheManifest.length > 0) {
+  registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html"), { denylist: [/^\/api\//] }));
+}
 
 // Product listings/images are safe to show briefly stale while a fresh copy
 // loads in the background — keeps browsing snappy on poor campus wifi/mobile
