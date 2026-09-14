@@ -1,7 +1,12 @@
 import client from "./client";
 
-export function listProducts(category) {
-  return client.get("/products", { params: category ? { category } : {} });
+export function listProducts({ category, keyword, minPrice, maxPrice } = {}) {
+  const params = {};
+  if (category) params.category = category;
+  if (keyword) params.keyword = keyword;
+  if (minPrice !== undefined && minPrice !== null && minPrice !== "") params.minPrice = minPrice;
+  if (maxPrice !== undefined && maxPrice !== null && maxPrice !== "") params.maxPrice = maxPrice;
+  return client.get("/products", { params });
 }
 
 export function getProduct(id) {

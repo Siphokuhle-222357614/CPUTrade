@@ -5,13 +5,19 @@ import za.ac.cput.cputrade.common.exception.ApiException;
 import za.ac.cput.cputrade.product.dto.ProductCreateRequest;
 import za.ac.cput.cputrade.product.dto.ProductResponse;
 import za.ac.cput.cputrade.product.dto.ProductUpdateRequest;
+import za.ac.cput.cputrade.rating.RatingService;
+import za.ac.cput.cputrade.rating.dto.RatingSummary;
 import za.ac.cput.cputrade.user.Role;
 import za.ac.cput.cputrade.user.User;
 import za.ac.cput.cputrade.user.UserRepository;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -19,24 +25,41 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final RatingService ratingService;
 
-    public ProductService(ProductRepository productRepository, UserRepository userRepository) {
+    public ProductService(ProductRepository productRepository, UserRepository userRepository, RatingService ratingService) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.ratingService = ratingService;
     }
 
-    public List<ProductResponse> listActive(Category category) {
-        List<Product> products = category == null
-                ? productRepository.findByActiveTrueOrderByCreatedAtDesc()
-                : productRepository.findByActiveTrueAndCategoryOrderByCreatedAtDesc(category);
-        return products.stream().map(ProductResponse::from).toList();
+    /** US3.1 category, US3.2 keyword, US3.3 price range — any combination, all optional. */
+    public List<ProductResponse> search(Category category, String keyword, BigDecimal minPrice, BigDecimal maxPrice) {
+        List<Specification<Product>> filters = new ArrayList<>();
+        filters.add(ProductSpecifications.isActive());
+        if (category != null) {
+            filters.add(ProductSpecifications.hasCategory(category));
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            filters.add(ProductSpecifications.keywordMatches(keyword));
+        }
+        if (minPrice != null) {
+            filters.add(ProductSpecifications.priceGte(minPrice));
+        }
+        if (maxPrice != null) {
+            filters.add(ProductSpecifications.priceLte(maxPrice));
+        }
+
+        Specification<Product> combined = filters.stream().reduce(Specification::and).orElse(null);
+        List<Product> products = productRepository.findAll(combined, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return products.stream().map(this::toResponse).toList();
     }
 
     public ProductResponse getActiveById(Long id) {
         Product product = productRepository.findById(id)
                 .filter(Product::isActive)
                 .orElseThrow(() -> ApiException.notFound("Listing not found"));
-        return ProductResponse.from(product);
+        return toResponse(product);
     }
 
     @Transactional
@@ -65,7 +88,7 @@ public class ProductService {
                 .active(true)
                 .build();
 
-        return ProductResponse.from(productRepository.save(product));
+        return toResponse(productRepository.save(product));
     }
 
     @Transactional
@@ -84,7 +107,7 @@ public class ProductService {
         product.setCategory(request.getCategory());
         product.setCondition(request.getCondition());
 
-        return ProductResponse.from(productRepository.save(product));
+        return toResponse(productRepository.save(product));
     }
 
     @Transactional
@@ -92,6 +115,12 @@ public class ProductService {
         Product product = findByIdOrThrow(id);
         requireOwnerOrAdmin(product, auth);
         productRepository.delete(product);
+    }
+
+    /** Public so AdminService can reuse the same rating-aware mapping. */
+    public ProductResponse toResponse(Product product) {
+        RatingSummary sellerRating = ratingService.summarize(product.getSeller().getId());
+        return ProductResponse.from(product, sellerRating);
     }
 
     private Product findByIdOrThrow(Long id) {

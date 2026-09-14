@@ -37,6 +37,19 @@ const routes = [
     component: () => import("../views/AdminView.vue"),
     meta: { requiresAdmin: true },
   },
+  {
+    path: "/chats",
+    name: "conversations",
+    component: () => import("../views/ConversationsView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/chats/:id",
+    name: "chat",
+    component: () => import("../views/ConversationView.vue"),
+    props: true,
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({

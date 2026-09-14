@@ -6,6 +6,7 @@ import lombok.Getter;
 import za.ac.cput.cputrade.product.Category;
 import za.ac.cput.cputrade.product.Condition;
 import za.ac.cput.cputrade.product.Product;
+import za.ac.cput.cputrade.rating.dto.RatingSummary;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -26,8 +27,11 @@ public class ProductResponse {
     private boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    /** Null when the seller has no ratings yet (US6.1). */
+    private Double sellerRatingAverage;
+    private long sellerRatingCount;
 
-    public static ProductResponse from(Product product) {
+    public static ProductResponse from(Product product, RatingSummary sellerRating) {
         return ProductResponse.builder()
                 .id(product.getId())
                 .sellerId(product.getSeller().getId())
@@ -41,6 +45,8 @@ public class ProductResponse {
                 .active(product.isActive())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
+                .sellerRatingAverage(sellerRating.average())
+                .sellerRatingCount(sellerRating.count())
                 .build();
     }
 }

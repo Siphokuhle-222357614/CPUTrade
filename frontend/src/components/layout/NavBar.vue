@@ -18,6 +18,7 @@ function handleLogout() {
       <router-link v-if="auth.isAuthenticated" to="/products/new" class="btn btn-accent">
         + Sell
       </router-link>
+      <router-link v-if="auth.isAuthenticated" to="/chats">Chats</router-link>
       <router-link v-if="auth.isAdmin" to="/admin">Admin</router-link>
 
       <template v-if="auth.isAuthenticated">

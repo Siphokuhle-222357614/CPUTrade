@@ -3,6 +3,7 @@ package za.ac.cput.cputrade.admin;
 import za.ac.cput.cputrade.common.exception.ApiException;
 import za.ac.cput.cputrade.product.Product;
 import za.ac.cput.cputrade.product.ProductRepository;
+import za.ac.cput.cputrade.product.ProductService;
 import za.ac.cput.cputrade.product.dto.ProductResponse;
 import za.ac.cput.cputrade.user.Role;
 import za.ac.cput.cputrade.user.User;
@@ -19,11 +20,14 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final ProductService productService;
     private final EmailNotifier emailNotifier;
 
-    public AdminService(UserRepository userRepository, ProductRepository productRepository, EmailNotifier emailNotifier) {
+    public AdminService(UserRepository userRepository, ProductRepository productRepository,
+                         ProductService productService, EmailNotifier emailNotifier) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
+        this.productService = productService;
         this.emailNotifier = emailNotifier;
     }
 
@@ -50,7 +54,7 @@ public class AdminService {
     /** All listings, active and inactive, for moderation (US6.3). */
     public List<ProductResponse> allListings() {
         return productRepository.findAllByOrderByCreatedAtDesc().stream()
-                .map(ProductResponse::from)
+                .map(productService::toResponse)
                 .toList();
     }
 
@@ -61,6 +65,6 @@ public class AdminService {
         product.setActive(false);
         Product saved = productRepository.save(product);
         emailNotifier.sendListingRemovedEmail(product.getSeller(), saved);
-        return ProductResponse.from(saved);
+        return productService.toResponse(saved);
     }
 }

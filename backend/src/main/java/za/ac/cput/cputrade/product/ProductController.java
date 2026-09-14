@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -22,8 +23,13 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> list(@RequestParam(required = false) Category category) {
-        return ResponseEntity.ok(productService.listActive(category));
+    public ResponseEntity<List<ProductResponse>> list(
+            @RequestParam(required = false) Category category,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice
+    ) {
+        return ResponseEntity.ok(productService.search(category, keyword, minPrice, maxPrice));
     }
 
     @GetMapping("/{id}")
