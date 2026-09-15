@@ -39,6 +39,10 @@ public class ProductResponse {
     private LocalDateTime soldAt;
     /** Null unless the seller named who they sold it to. */
     private String soldToUsername;
+    /** Null unless the seller named who they sold it to — lets the frontend tell "you're the buyer" apart from just reading the username. */
+    private Long soldToUserId;
+    /** The named buyer's own confirmation they received it — see {@code Product.buyerConfirmed}. Meaningless when {@link #soldToUserId} is null. */
+    private boolean buyerConfirmed;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     /** Null when the seller has no ratings yet (US6.1). */
@@ -76,6 +80,8 @@ public class ProductResponse {
                 .sold(product.isSold())
                 .soldAt(product.getSoldAt())
                 .soldToUsername(product.getSoldTo() != null ? product.getSoldTo().getUsername() : null)
+                .soldToUserId(product.getSoldTo() != null ? product.getSoldTo().getId() : null)
+                .buyerConfirmed(product.isBuyerConfirmed())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .sellerRatingAverage(sellerRating.average())

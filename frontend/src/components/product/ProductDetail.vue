@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../../stores/auth";
-import { deleteProduct, markAvailable } from "../../api/products";
+import { confirmReceived, deleteProduct, markAvailable } from "../../api/products";
 import { startConversation } from "../../api/chat";
 import SellerRatingBadge from "./SellerRatingBadge.vue";
 import VerifiedSellerBadge from "./VerifiedSellerBadge.vue";
@@ -29,6 +29,7 @@ const router = useRouter();
 const deleting = ref(false);
 const messaging = ref(false);
 const unmarkingSold = ref(false);
+const confirmingReceipt = ref(false);
 const errorMessage = ref("");
 const showDeleteConfirm = ref(false);
 const showReportDialog = ref(false);
@@ -40,8 +41,26 @@ const isOwner = computed(() => auth.user?.id === props.product.sellerId);
 const canManage = computed(() => isOwner.value || auth.isAdmin);
 // Once it's sold there's nothing left to buy, so starting a new chat about it is a dead end.
 const canMessageSeller = computed(() => auth.isAuthenticated && !isOwner.value && !props.product.sold);
-// Rating is tied to an actual completed trade, not just "anyone who looked at the listing".
-const canRateSeller = computed(() => auth.isAuthenticated && !isOwner.value && props.product.sold);
+// Whether *this* logged-in user is the specific buyer the seller named when marking it
+// sold -- as opposed to just "some other student who isn't the seller".
+const isSoldToCurrentUser = computed(
+  () => !!props.product.soldToUserId && auth.user?.id === props.product.soldToUserId
+);
+// Mirrors RatingService's own rule: a rating is tied to an actual completed trade, and
+// if the seller named who they sold it to, only that buyer can rate it -- and only once
+// they've confirmed receipt, so a rating is never just the seller's own say-so about their
+// own sale. A seller who didn't name a buyer ("Prefer not to say") keeps the original,
+// more lenient rule since there's no one specific to ask for a confirmation from.
+const canRateSeller = computed(() => {
+  if (!auth.isAuthenticated || isOwner.value || !props.product.sold) return false;
+  if (props.product.soldToUserId) {
+    return isSoldToCurrentUser.value && props.product.buyerConfirmed;
+  }
+  return true;
+});
+const canConfirmReceipt = computed(
+  () => isSoldToCurrentUser.value && props.product.sold && !props.product.buyerConfirmed
+);
 const canReport = computed(() => auth.isAuthenticated && !isOwner.value);
 const photos = computed(() => (props.product.imageUrls?.length ? props.product.imageUrls : []));
 
@@ -116,6 +135,20 @@ function handleMarkedSold(updated) {
   emit("updated", updated);
 }
 
+async function handleConfirmReceipt() {
+  confirmingReceipt.value = true;
+  errorMessage.value = "";
+  try {
+    const { data } = await confirmReceived(props.product.id);
+    toast.success("Thanks — you can now rate the seller!");
+    emit("updated", data);
+  } catch (err) {
+    errorMessage.value = err.response?.data?.message || "Could not confirm receipt.";
+  } finally {
+    confirmingReceipt.value = false;
+  }
+}
+
 async function handleMarkAvailable() {
   unmarkingSold.value = true;
   errorMessage.value = "";
@@ -183,8 +216,21 @@ async function handleMarkAvailable() {
     <p v-if="product.sold" class="field-hint">
       Sold{{ product.soldToUsername ? ` to ${product.soldToUsername}` : "" }}
     </p>
+    <p v-if="isOwner && product.sold && product.soldToUsername && !product.buyerConfirmed" class="field-hint">
+      ⏳ Waiting for {{ product.soldToUsername }} to confirm they received this.
+    </p>
+    <p v-if="isOwner && product.sold && product.buyerConfirmed" class="field-hint">
+      ✅ {{ product.soldToUsername }} confirmed they received this.
+    </p>
 
     <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
+
+    <div v-if="canConfirmReceipt" class="alert alert-info" style="display: flex; flex-direction: column; gap: var(--space-2)">
+      <span>You bought this from {{ product.sellerUsername }}. Confirm you received it to unlock leaving them a rating.</span>
+      <button type="button" class="btn btn-accent" :disabled="confirmingReceipt" @click="handleConfirmReceipt">
+        {{ confirmingReceipt ? "Confirming…" : "✅ Confirm I received this" }}
+      </button>
+    </div>
 
     <div class="row" style="margin-top: var(--space-4)">
       <button v-if="canMessageSeller" type="button" class="btn btn-primary" :disabled="messaging" @click="handleMessageSeller">

@@ -273,11 +273,59 @@ public class ProductService {
             product.setSold(true);
             product.setSoldAt(LocalDateTime.now());
             product.setSoldTo(soldTo);
+            // Defensive reset, not just the new-row default: if this listing was restocked
+            // and resold after an earlier sale, the previous buyer's confirmation must not
+            // carry over and silently unlock rating for whoever bought it this time.
+            product.setBuyerConfirmed(false);
+            product.setBuyerConfirmedAt(null);
         }
         Product saved = productRepository.save(product);
         if (soldOut) {
             notifyWishlisters(saved, NotificationType.WISHLIST_ITEM_SOLD,
                     "\"" + saved.getTitle() + "\" was just sold — better luck with the next one!");
+            if (soldTo != null) {
+                try {
+                    notificationService.create(soldTo, NotificationType.CONFIRM_RECEIPT_REQUESTED,
+                            saved.getSeller().getUsername() + " marked \"" + saved.getTitle()
+                                    + "\" as sold to you — confirm you received it so you can rate them",
+                            "/products/" + saved.getId());
+                } catch (Exception e) {
+                    log.warn("Could not notify buyer {} to confirm receipt for product {}", soldTo.getId(), saved.getId(), e);
+                }
+            }
+        }
+        return toResponse(saved);
+    }
+
+    /**
+     * The named buyer's own confirmation that they received the item (see
+     * {@link Product#buyerConfirmed}) — required before {@code RatingService}
+     * will let them rate the seller for this sale.
+     */
+    @Transactional
+    public ProductResponse confirmReceived(Long id, Authentication auth) {
+        Product product = findByIdOrThrow(id);
+        User buyer = currentUser(auth);
+
+        if (!product.isSold() || product.getSoldTo() == null) {
+            throw ApiException.badRequest("This listing has no buyer on record to confirm receipt");
+        }
+        if (!product.getSoldTo().getId().equals(buyer.getId())) {
+            throw ApiException.forbidden("Only the buyer this was sold to can confirm receipt");
+        }
+        if (product.isBuyerConfirmed()) {
+            throw ApiException.badRequest("You've already confirmed receipt of this item");
+        }
+
+        product.setBuyerConfirmed(true);
+        product.setBuyerConfirmedAt(LocalDateTime.now());
+        Product saved = productRepository.save(product);
+        try {
+            notificationService.create(saved.getSeller(), NotificationType.RECEIPT_CONFIRMED,
+                    buyer.getUsername() + " confirmed they received \"" + saved.getTitle() + "\"",
+                    "/products/" + saved.getId());
+        } catch (Exception e) {
+            log.warn("Could not notify seller {} that receipt was confirmed for product {}", saved.getSeller().getId(), saved.getId(), e);
         }
         return toResponse(saved);
     }
@@ -297,6 +345,8 @@ public class ProductService {
         product.setSold(false);
         product.setSoldAt(null);
         product.setSoldTo(null);
+        product.setBuyerConfirmed(false);
+        product.setBuyerConfirmedAt(null);
         if (product.getQuantity() <= 0) {
             product.setQuantity(1);
         }

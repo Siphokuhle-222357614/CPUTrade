@@ -39,6 +39,19 @@ public class RatingService {
         if (!product.isSold()) {
             throw ApiException.badRequest("You can rate a seller once they've marked this listing as sold");
         }
+        // When the seller named who they sold it to, only that buyer can rate this sale, and
+        // only once they've confirmed they actually received it -- otherwise a rating is just
+        // the seller's own say-so about their own sale. Sellers who didn't name a buyer (picked
+        // "Prefer not to say") keep the original, more lenient rule below since there's no one
+        // specific to ask for a confirmation from.
+        if (product.getSoldTo() != null) {
+            if (!product.getSoldTo().getId().equals(rater.getId())) {
+                throw ApiException.forbidden("Only the buyer this was sold to can rate this sale");
+            }
+            if (!product.isBuyerConfirmed()) {
+                throw ApiException.badRequest("Confirm you received this item before rating the seller");
+            }
+        }
         if (ratingRepository.existsByProductIdAndRaterId(productId, rater.getId())) {
             throw ApiException.conflict("You have already rated this listing");
         }

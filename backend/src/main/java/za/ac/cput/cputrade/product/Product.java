@@ -149,6 +149,22 @@ public class Product {
     @JoinColumn(name = "sold_to_user_id")
     private User soldTo;
 
+    /**
+     * The buyer's own confirmation that they actually received the item —
+     * distinct from {@link #sold}, which is only ever the seller's side of
+     * the story. Only meaningful when {@link #soldTo} is set (there's no one
+     * to ask otherwise); {@code RatingService} requires it before that buyer
+     * can rate the seller, so a rating is never just self-reported by the
+     * one person it's about.
+     */
+    @Column(name = "buyer_confirmed", nullable = false)
+    @org.hibernate.annotations.ColumnDefault("0")
+    @Builder.Default
+    private boolean buyerConfirmed = false;
+
+    @Column(name = "buyer_confirmed_at")
+    private LocalDateTime buyerConfirmedAt;
+
     // US2.4: incremented each time a shopper opens the listing's detail page
     // (ProductService#getActiveById) — not incremented by search/list results.
     @Column(name = "view_count", nullable = false)

@@ -59,6 +59,8 @@ public class NotificationService {
             case PRICE_DROP -> "Price drop on your wishlist 💸";
             case WISHLIST_ITEM_SOLD -> "Wishlist update";
             case SAVED_SEARCH_MATCH -> "A new listing matches your search 🔎";
+            case CONFIRM_RECEIPT_REQUESTED -> "Confirm your CPUTrade purchase";
+            case RECEIPT_CONFIRMED -> "Sale confirmed ✅";
         };
     }
 

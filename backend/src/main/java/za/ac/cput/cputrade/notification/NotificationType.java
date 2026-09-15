@@ -10,5 +10,9 @@ public enum NotificationType {
     /** A listing on the recipient's wishlist was marked sold by someone else. */
     WISHLIST_ITEM_SOLD,
     /** A freshly-posted listing matches one of the recipient's saved search alerts. */
-    SAVED_SEARCH_MATCH
+    SAVED_SEARCH_MATCH,
+    /** Sent to the named buyer when a seller marks a listing sold to them — asks them to confirm receipt. */
+    CONFIRM_RECEIPT_REQUESTED,
+    /** Sent to the seller once their buyer confirms they actually received the item. */
+    RECEIPT_CONFIRMED
 }

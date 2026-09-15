@@ -65,7 +65,9 @@ async function confirm() {
         search once you've sold the last one.
       </template>
       <template v-else>
-        This hides the listing from marketplace search and lets the buyer leave you a rating. You can undo this later.
+        This hides the listing from marketplace search. Naming a buyer below asks them to confirm
+        they received it before they can rate you — leave it as "Prefer not to say" to allow any
+        rating once it's sold, like before. You can undo this later.
       </template>
     </p>
 

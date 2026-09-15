@@ -49,6 +49,11 @@ export function markAvailable(id) {
   return client.patch(`/products/${id}/mark-available`);
 }
 
+/** The named buyer confirming they actually received the item — unlocks rating the seller. */
+export function confirmReceived(id) {
+  return client.patch(`/products/${id}/confirm-received`);
+}
+
 export function addProductImages(id, images) {
   return client.post(`/products/${id}/images`, { images });
 }

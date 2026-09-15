@@ -86,6 +86,12 @@ public class ProductController {
         return ResponseEntity.ok(productService.markAvailable(id, auth));
     }
 
+    /** The named buyer confirming they actually received the item — unlocks rating the seller. */
+    @PatchMapping("/{id}/confirm-received")
+    public ResponseEntity<ProductResponse> confirmReceived(@PathVariable Long id, Authentication auth) {
+        return ResponseEntity.ok(productService.confirmReceived(id, auth));
+    }
+
     @PostMapping("/{id}/images")
     public ResponseEntity<ProductResponse> addImages(@PathVariable Long id, @Valid @RequestBody AddImagesRequest request, Authentication auth) {
         return ResponseEntity.ok(productService.addImages(id, request, auth));
