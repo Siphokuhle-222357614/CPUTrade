@@ -165,9 +165,13 @@ async function handleMarkAvailable() {
     <span v-if="product.campus" class="badge badge-condition" style="margin-top: var(--space-2)">
       📍 {{ campusLabels[product.campus] || product.campus }}
     </span>
+    <span v-if="product.openToSwap" class="badge badge-free" style="margin-top: var(--space-2)">🔄 Open to Trade</span>
 
     <h3>{{ product.title }}</h3>
     <p style="white-space: pre-wrap">{{ product.description }}</p>
+    <p v-if="product.openToSwap && product.swapPreferences" class="field-hint">
+      🔄 Looking for: {{ product.swapPreferences }}
+    </p>
     <p class="field-hint">
       Sold by {{ product.sellerUsername }} ·
       <SellerRatingBadge :average="product.sellerRatingAverage" :count="product.sellerRatingCount" />

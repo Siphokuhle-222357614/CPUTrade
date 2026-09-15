@@ -28,6 +28,8 @@ const form = reactive({
   condition: props.initial?.condition || "GOOD",
   campus: props.initial?.campus || "BELLVILLE",
   quantity: props.initial?.quantity ?? 1,
+  openToSwap: props.initial?.openToSwap ?? false,
+  swapPreferences: props.initial?.swapPreferences || "",
   images: [], // create-only: new-upload Base64 strings — see ImageUploadInput
 });
 
@@ -50,6 +52,8 @@ async function handleSubmit() {
         condition: form.condition,
         campus: form.campus,
         quantity: Number(form.quantity),
+        openToSwap: form.openToSwap,
+        swapPreferences: form.swapPreferences,
       });
     } else {
       response = await createProduct({
@@ -60,6 +64,8 @@ async function handleSubmit() {
         condition: form.condition,
         campus: form.campus,
         quantity: Number(form.quantity),
+        openToSwap: form.openToSwap,
+        swapPreferences: form.swapPreferences,
         images: form.images,
       });
     }
@@ -138,6 +144,23 @@ async function handleSubmit() {
           <option value="WELLINGTON">Wellington</option>
         </select>
         <p class="field-hint">Where a buyer can meet you to collect it.</p>
+      </div>
+
+      <div class="field">
+        <label class="row" style="cursor: pointer; justify-content: flex-start; gap: var(--space-2)">
+          <input v-model="form.openToSwap" type="checkbox" style="width: auto" />
+          <span>🔄 Open to a swap/trade, not just cash</span>
+        </label>
+      </div>
+      <div v-if="form.openToSwap" class="field">
+        <label for="swapPreferences">What are you looking for in a trade? (optional)</label>
+        <input
+          id="swapPreferences"
+          v-model="form.swapPreferences"
+          type="text"
+          maxlength="300"
+          placeholder="e.g. a scientific calculator, or another textbook"
+        />
       </div>
 
       <ImageUploadInput v-if="!initial" v-model="form.images" />

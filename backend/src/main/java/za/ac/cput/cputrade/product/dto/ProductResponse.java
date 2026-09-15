@@ -52,6 +52,10 @@ public class ProductResponse {
     private boolean freecycle;
     /** How many students currently have this listing on their wishlist — a live social-proof signal. */
     private long watcherCount;
+    /** The marketplace's namesake feature — "I'd trade this too, not just sell it". */
+    private boolean openToSwap;
+    /** What the seller wants in exchange. Null/blank unless {@link #openToSwap}. */
+    private String swapPreferences;
 
     public static ProductResponse from(Product product, RatingSummary sellerRating, long sellerCompletedSales, long watcherCount) {
         List<String> images = product.getImageUrls() != null ? product.getImageUrls() : List.of();
@@ -80,6 +84,8 @@ public class ProductResponse {
                 .viewCount(product.getViewCount())
                 .freecycle(product.getPrice() != null && product.getPrice().signum() == 0)
                 .watcherCount(watcherCount)
+                .openToSwap(product.isOpenToSwap())
+                .swapPreferences(product.getSwapPreferences())
                 .build();
     }
 }

@@ -31,6 +31,10 @@ public final class ProductSpecifications {
         return (root, query, cb) -> cb.equal(root.get("campus"), campus);
     }
 
+    public static Specification<Product> isOpenToSwap() {
+        return (root, query, cb) -> cb.isTrue(root.get("openToSwap"));
+    }
+
     /** Free-text match across title and description (US3.2). */
     public static Specification<Product> keywordMatches(String keyword) {
         String like = "%" + keyword.toLowerCase() + "%";

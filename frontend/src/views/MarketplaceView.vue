@@ -18,6 +18,7 @@ const auth = useAuthStore();
 const toast = useToastStore();
 const category = ref(null);
 const campus = ref("");
+const openToSwap = ref(false);
 const keyword = ref("");
 const minPrice = ref("");
 const maxPrice = ref("");
@@ -54,11 +55,13 @@ let debounceTimer = null;
 async function load() {
   loading.value = true;
   errorMessage.value = "";
-  const noFilters = !category.value && !campus.value && !keyword.value && !minPrice.value && !maxPrice.value;
+  const noFilters =
+    !category.value && !campus.value && !openToSwap.value && !keyword.value && !minPrice.value && !maxPrice.value;
   try {
     const { data } = await listProducts({
       category: category.value,
       campus: campus.value,
+      openToSwap: openToSwap.value,
       keyword: keyword.value,
       minPrice: minPrice.value,
       maxPrice: maxPrice.value,
@@ -90,9 +93,9 @@ function debouncedLoad() {
   debounceTimer = setTimeout(load, 300);
 }
 
-// Category/campus changes reload immediately; free-text/price fields debounce
-// so we don't hammer the API on every keystroke.
-watch([category, campus], load);
+// Category/campus/swap changes reload immediately; free-text/price fields
+// debounce so we don't hammer the API on every keystroke.
+watch([category, campus, openToSwap], load);
 watch([keyword, minPrice, maxPrice], debouncedLoad);
 onMounted(load);
 onBeforeUnmount(() => clearTimeout(debounceTimer));
@@ -152,8 +155,22 @@ const heroStats = computed(() => {
     v-model:min-price="minPrice"
     v-model:max-price="maxPrice"
   />
-  <div v-if="canSaveSearch" class="row" style="justify-content: flex-end; margin: calc(var(--space-4) * -1) 0 var(--space-4)">
-    <button type="button" class="btn btn-outline btn-sm" :disabled="savingSearch" @click="saveCurrentSearch">
+  <div class="row" style="justify-content: space-between; margin: calc(var(--space-4) * -1) 0 var(--space-4)">
+    <button
+      type="button"
+      class="pill"
+      :class="{ active: openToSwap }"
+      @click="openToSwap = !openToSwap"
+    >
+      🔄 Open to Trade
+    </button>
+    <button
+      v-if="canSaveSearch"
+      type="button"
+      class="btn btn-outline btn-sm"
+      :disabled="savingSearch"
+      @click="saveCurrentSearch"
+    >
       🔔 {{ savingSearch ? "Saving…" : "Notify me about listings like this" }}
     </button>
   </div>

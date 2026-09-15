@@ -42,6 +42,12 @@ public class ProductCreateRequest {
     @Min(value = 1, message = "quantity must be at least 1")
     private Integer quantity;
 
+    /** A plain boolean, not Boolean — omitting it is the same as false. */
+    private boolean openToSwap;
+
+    @Size(max = 300)
+    private String swapPreferences;
+
     /**
      * Base64-encoded JPEG/PNG photos, decoded size capped at 500KB each —
      * this is the upload wire format only, {@code ImageStorageService}

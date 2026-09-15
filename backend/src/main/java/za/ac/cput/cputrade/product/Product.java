@@ -93,6 +93,22 @@ public class Product {
     private int quantity = 1;
 
     /**
+     * "I'd swap this instead of / as well as selling it" — the marketplace's
+     * namesake feature. {@code false} is the correct implicit MySQL default
+     * for existing rows here (unlike {@link #quantity}'s int default of 0,
+     * which was wrong), but it's spelled out explicitly anyway rather than
+     * relied on by coincidence.
+     */
+    @Column(name = "open_to_swap", nullable = false)
+    @org.hibernate.annotations.ColumnDefault("0")
+    @Builder.Default
+    private boolean openToSwap = false;
+
+    /** What the seller wants in exchange, e.g. "Looking for a scientific calculator" — only meaningful when {@link #openToSwap}. */
+    @Column(name = "swap_preferences", length = 300)
+    private String swapPreferences;
+
+    /**
      * Every photo attached to this listing, in upload order — an
      * {@code @ElementCollection} rather than a full entity since nothing
      * beyond "which URLs, in what order" is ever needed. Backed by a

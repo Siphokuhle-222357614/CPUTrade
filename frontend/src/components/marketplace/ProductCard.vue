@@ -48,6 +48,7 @@ function formatPrice(price) {
     </div>
     <div class="row">
       <span v-if="product.freecycle" class="badge badge-free">♻️ Freecycle</span>
+      <span v-if="product.openToSwap" class="badge badge-free">🔄 Open to Trade</span>
       <span v-if="!product.sold && product.quantity > 1" class="badge badge-condition">×{{ product.quantity }}</span>
       <VerifiedSellerBadge :verified="product.sellerVerified" />
     </div>

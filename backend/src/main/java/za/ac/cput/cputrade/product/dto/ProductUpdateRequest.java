@@ -47,4 +47,10 @@ public class ProductUpdateRequest {
     @NotNull
     @Min(value = 1, message = "quantity must be at least 1")
     private Integer quantity;
+
+    /** Not @NotNull — omitting it (a plain boolean, not Boolean) is the same as false, and it's a real optional toggle, not a required choice like category/campus. */
+    private boolean openToSwap;
+
+    @Size(max = 300)
+    private String swapPreferences;
 }

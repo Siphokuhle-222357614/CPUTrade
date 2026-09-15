@@ -29,11 +29,12 @@ public class ProductController {
     public ResponseEntity<List<ProductResponse>> list(
             @RequestParam(required = false) Category category,
             @RequestParam(required = false) Campus campus,
+            @RequestParam(required = false) Boolean openToSwap,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice
     ) {
-        return ResponseEntity.ok(productService.search(category, campus, keyword, minPrice, maxPrice));
+        return ResponseEntity.ok(productService.search(category, campus, openToSwap, keyword, minPrice, maxPrice));
     }
 
     /** The current user's own business dashboard — every listing they own, active or not. Must come before /{id}. */

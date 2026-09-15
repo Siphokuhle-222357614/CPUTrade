@@ -67,8 +67,9 @@ public class ProductService {
         this.savedSearchService = savedSearchService;
     }
 
-    /** US3.1 category, campus, US3.2 keyword, US3.3 price range — any combination, all optional. */
-    public List<ProductResponse> search(Category category, Campus campus, String keyword, BigDecimal minPrice, BigDecimal maxPrice) {
+    /** US3.1 category, campus, open-to-swap, US3.2 keyword, US3.3 price range — any combination, all optional. */
+    public List<ProductResponse> search(Category category, Campus campus, Boolean openToSwap, String keyword,
+                                         BigDecimal minPrice, BigDecimal maxPrice) {
         List<Specification<Product>> filters = new ArrayList<>();
         filters.add(ProductSpecifications.isActive());
         // Sold-out listings have nothing left to buy — keep them off the browse/search
@@ -80,6 +81,11 @@ public class ProductService {
         }
         if (campus != null) {
             filters.add(ProductSpecifications.hasCampus(campus));
+        }
+        // Only ever narrows the feed when explicitly asked for -- "false"/absent means
+        // "show everything", the same way an unset category means "every category".
+        if (Boolean.TRUE.equals(openToSwap)) {
+            filters.add(ProductSpecifications.isOpenToSwap());
         }
         if (keyword != null && !keyword.isBlank()) {
             filters.add(ProductSpecifications.keywordMatches(keyword));
@@ -144,6 +150,8 @@ public class ProductService {
                 .condition(request.getCondition())
                 .campus(request.getCampus())
                 .quantity(request.getQuantityOrDefault())
+                .openToSwap(request.isOpenToSwap())
+                .swapPreferences(request.isOpenToSwap() ? request.getSwapPreferences() : null)
                 .imageUrls(imageUrls)
                 .active(true)
                 .build();
@@ -171,6 +179,8 @@ public class ProductService {
         product.setCondition(request.getCondition());
         product.setCampus(request.getCampus());
         product.setQuantity(request.getQuantity());
+        product.setOpenToSwap(request.isOpenToSwap());
+        product.setSwapPreferences(request.isOpenToSwap() ? request.getSwapPreferences() : null);
 
         Product saved = productRepository.save(product);
         if (previousPrice != null && request.getPrice().compareTo(previousPrice) < 0) {
