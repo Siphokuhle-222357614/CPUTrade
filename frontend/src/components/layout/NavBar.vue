@@ -72,7 +72,15 @@ const initials = computed(() => {
 <template>
   <header class="navbar">
     <div class="navbar-inner">
-      <router-link to="/" class="brand" @click="closeMenus">🛒 CPUTrade</router-link>
+      <router-link to="/" class="brand" @click="closeMenus">
+        <svg class="brand-icon" viewBox="30 40 140 120" aria-hidden="true">
+          <path d="M50,74 Q95,60 138,74" stroke="#0d9488" stroke-width="16" stroke-linecap="round" fill="none"/>
+          <g transform="translate(138,74) rotate(18.03)"><polygon points="18,0 -18,-16 -18,16" fill="#0d9488"/></g>
+          <path d="M150,126 Q105,140 62,126" stroke="#0d9488" stroke-width="16" stroke-linecap="round" fill="none"/>
+          <g transform="translate(62,126) rotate(198.03)"><polygon points="18,0 -18,-16 -18,16" fill="#0d9488"/></g>
+        </svg>
+        <span>CPUTrade</span>
+      </router-link>
 
       <!-- Desktop nav: the frequent stuff stays one click away; everything
            else about "me" (dashboard, logout) lives behind the avatar so the

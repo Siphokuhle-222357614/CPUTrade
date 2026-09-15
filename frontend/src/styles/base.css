@@ -334,14 +334,21 @@ button.card:hover {
 }
 .navbar .brand {
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 900;
   font-size: 18px;
   color: #fff;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   transition: transform var(--transition-base);
 }
 .navbar .brand:hover {
   transform: rotate(-4deg) scale(1.05);
+}
+.brand-icon {
+  width: 26px;
+  height: 22px;
+  flex-shrink: 0;
 }
 
 .navbar-links-desktop {
