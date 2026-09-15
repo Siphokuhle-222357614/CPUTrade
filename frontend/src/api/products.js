@@ -18,6 +18,11 @@ export function listMyProducts() {
   return client.get("/products/mine");
 }
 
+/** Public "recent activity" feed for the marketplace hero — the 10 most recently completed sales. */
+export function getRecentlySold() {
+  return client.get("/products/recently-sold");
+}
+
 export function createProduct(payload) {
   return client.post("/products", payload);
 }

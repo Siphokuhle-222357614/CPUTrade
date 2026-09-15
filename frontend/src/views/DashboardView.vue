@@ -24,6 +24,17 @@ const myConversationsAsSeller = computed(() =>
   conversations.value.filter((c) => c.sellerId === auth.user?.id)
 );
 
+// How many distinct buyers have messaged about each listing -- a cheap,
+// genuinely useful "is anyone even interested?" signal next to each row,
+// built entirely from data already fetched for the page above.
+const inquiryCountByProduct = computed(() => {
+  const counts = {};
+  for (const conversation of myConversationsAsSeller.value) {
+    counts[conversation.productId] = (counts[conversation.productId] || 0) + 1;
+  }
+  return counts;
+});
+
 const stats = computed(() => {
   const active = listings.value.filter((p) => p.active && !p.sold);
   const sold = listings.value.filter((p) => p.sold);
@@ -128,6 +139,11 @@ onMounted(load);
         </span>
         <span class="row" style="width: auto; gap: var(--space-2)">
           <span class="field-hint">{{ product.viewCount }} view{{ product.viewCount === 1 ? "" : "s" }}</span>
+          <span v-if="inquiryCountByProduct[product.id]" class="field-hint">
+            · 💬 {{ inquiryCountByProduct[product.id] }}
+            {{ inquiryCountByProduct[product.id] === 1 ? "inquiry" : "inquiries" }}
+          </span>
+          <span v-if="product.watcherCount" class="field-hint">· 👀 {{ product.watcherCount }} watching</span>
           <span v-if="product.sold" class="badge badge-sold">Sold</span>
           <span v-else-if="product.active" class="badge badge-success">Active</span>
           <span v-else class="badge badge-inactive">Removed</span>

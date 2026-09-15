@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import CategoryFilterPills from "../components/marketplace/CategoryFilterPills.vue";
 import SearchAndPriceFilter from "../components/marketplace/SearchAndPriceFilter.vue";
 import ProductGrid from "../components/marketplace/ProductGrid.vue";
+import RecentActivityTicker from "../components/marketplace/RecentActivityTicker.vue";
 import SkeletonCard from "../components/common/SkeletonCard.vue";
 import { listProducts } from "../api/products";
 import { createSavedSearch } from "../api/savedSearches";
@@ -138,6 +139,7 @@ const heroStats = computed(() => {
           <span>Categories active</span>
         </div>
       </div>
+      <RecentActivityTicker />
     </div>
   </div>
 

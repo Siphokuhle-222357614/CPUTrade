@@ -1007,6 +1007,34 @@ button.card:hover {
   color: rgba(255, 255, 255, 0.7);
 }
 
+/* A live "someone just bought this" strip -- proof the marketplace is
+   actually active, right where a first-time visitor is already looking. */
+.activity-ticker {
+  display: inline-block;
+  margin-top: var(--space-4);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 13px;
+  text-decoration: none;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.activity-ticker:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--transition-base);
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 /* --- A little more presence on primary CTAs --- */
 .btn-primary,
 .btn-accent {

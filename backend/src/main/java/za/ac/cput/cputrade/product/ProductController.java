@@ -41,6 +41,12 @@ public class ProductController {
         return ResponseEntity.ok(productService.listMine(auth));
     }
 
+    /** Public "recent activity" ticker for the marketplace hero. Must come before /{id}. */
+    @GetMapping("/recently-sold")
+    public ResponseEntity<List<ProductResponse>> recentlySold() {
+        return ResponseEntity.ok(productService.recentlySold());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getOne(@PathVariable Long id) {
         return ResponseEntity.ok(productService.getActiveById(id));

@@ -93,6 +93,16 @@ public class ProductService {
         return products.stream().map(this::toResponse).toList();
     }
 
+    /**
+     * The 10 most recently completed sales, across every seller — public
+     * social proof that the marketplace is actually active, not a private
+     * business metric (nothing here isn't already visible on each listing's
+     * own now-sold detail page).
+     */
+    public List<ProductResponse> recentlySold() {
+        return productRepository.findTop10BySoldTrueOrderBySoldAtDesc().stream().map(this::toResponse).toList();
+    }
+
     /** A seller's business dashboard — every listing they own, active/sold/inactive, newest first. */
     public List<ProductResponse> listMine(Authentication auth) {
         User seller = currentUser(auth);
