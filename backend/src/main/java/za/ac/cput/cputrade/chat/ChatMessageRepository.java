@@ -12,4 +12,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     List<ChatMessage> findByConversationIdAndSenderIdNotAndDeliveredAtIsNull(Long conversationId, Long senderId);
 
     List<ChatMessage> findByConversationIdAndSenderIdNotAndReadAtIsNull(Long conversationId, Long senderId);
+
+    /** So a deleted listing's conversations don't leave orphaned messages behind an FK constraint. */
+    void deleteByConversationIdIn(List<Long> conversationIds);
 }

@@ -13,4 +13,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     /** Everyone who has messaged the seller about this listing — the "mark as sold to" candidate list. */
     List<Conversation> findByProductIdOrderByCreatedAtDesc(Long productId);
+
+    /** So a deleted listing doesn't leave orphaned conversations behind an FK constraint. */
+    void deleteByProductId(Long productId);
 }

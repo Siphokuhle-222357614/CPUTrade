@@ -1,5 +1,6 @@
 package za.ac.cput.cputrade.product;
 
+import za.ac.cput.cputrade.chat.ChatMessageRepository;
 import za.ac.cput.cputrade.chat.Conversation;
 import za.ac.cput.cputrade.chat.ConversationRepository;
 import za.ac.cput.cputrade.common.exception.ApiException;
@@ -43,6 +44,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final ConversationRepository conversationRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final RatingService ratingService;
     private final ImageStorageService imageStorageService;
     private final WishlistItemRepository wishlistItemRepository;
@@ -50,12 +52,14 @@ public class ProductService {
     private final SavedSearchService savedSearchService;
 
     public ProductService(ProductRepository productRepository, UserRepository userRepository,
-                           ConversationRepository conversationRepository, RatingService ratingService,
-                           ImageStorageService imageStorageService, WishlistItemRepository wishlistItemRepository,
-                           NotificationService notificationService, SavedSearchService savedSearchService) {
+                           ConversationRepository conversationRepository, ChatMessageRepository chatMessageRepository,
+                           RatingService ratingService, ImageStorageService imageStorageService,
+                           WishlistItemRepository wishlistItemRepository, NotificationService notificationService,
+                           SavedSearchService savedSearchService) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.conversationRepository = conversationRepository;
+        this.chatMessageRepository = chatMessageRepository;
         this.ratingService = ratingService;
         this.imageStorageService = imageStorageService;
         this.wishlistItemRepository = wishlistItemRepository;
@@ -278,8 +282,24 @@ public class ProductService {
     public void delete(Long id, Authentication auth) {
         Product product = findByIdOrThrow(id);
         requireOwnerOrAdmin(product, auth);
-        // Must go before the product row itself — wishlist_items.product_id is a NOT NULL FK.
+
+        // All of this must go before the product row itself — every one of these
+        // tables has a NOT NULL FK onto products.id. Deleting a listing a buyer had
+        // already messaged about used to 500 (a real bug, not hypothetical: found by
+        // deleting a listing with a conversation on it) because only the wishlist
+        // side of this was ever cleaned up. Messages before conversations, since
+        // chat_messages.conversation_id is itself a NOT NULL FK onto conversations.
+        List<Long> conversationIds = conversationRepository.findByProductIdOrderByCreatedAtDesc(id).stream()
+                .map(Conversation::getId)
+                .toList();
+        if (!conversationIds.isEmpty()) {
+            // An empty IN (...) clause is invalid JPQL — Hibernate would throw before
+            // ever reaching the database, so this only runs when there's something to delete.
+            chatMessageRepository.deleteByConversationIdIn(conversationIds);
+        }
+        conversationRepository.deleteByProductId(id);
         wishlistItemRepository.deleteByProductId(id);
+
         productRepository.delete(product);
         for (String imageUrl : product.getImageUrls()) {
             imageStorageService.delete(imageUrl);
