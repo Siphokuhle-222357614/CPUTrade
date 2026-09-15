@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import za.ac.cput.cputrade.product.Campus;
 import za.ac.cput.cputrade.product.Category;
 import za.ac.cput.cputrade.product.Condition;
 
@@ -39,6 +40,9 @@ public class ProductUpdateRequest {
 
     @NotNull
     private Condition condition;
+
+    @NotNull
+    private Campus campus;
 
     @NotNull
     @Min(value = 1, message = "quantity must be at least 1")

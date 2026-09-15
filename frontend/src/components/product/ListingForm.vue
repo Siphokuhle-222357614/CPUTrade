@@ -26,6 +26,7 @@ const form = reactive({
   price: props.initial?.price ?? "",
   category: props.initial?.category || "TEXTBOOKS",
   condition: props.initial?.condition || "GOOD",
+  campus: props.initial?.campus || "BELLVILLE",
   quantity: props.initial?.quantity ?? 1,
   images: [], // create-only: new-upload Base64 strings — see ImageUploadInput
 });
@@ -47,6 +48,7 @@ async function handleSubmit() {
         price: Number(form.price),
         category: form.category,
         condition: form.condition,
+        campus: form.campus,
         quantity: Number(form.quantity),
       });
     } else {
@@ -56,6 +58,7 @@ async function handleSubmit() {
         price: Number(form.price),
         category: form.category,
         condition: form.condition,
+        campus: form.campus,
         quantity: Number(form.quantity),
         images: form.images,
       });
@@ -123,6 +126,18 @@ async function handleSubmit() {
           <option value="FAIR">Fair</option>
           <option value="POOR">Poor</option>
         </select>
+      </div>
+
+      <div class="field">
+        <label for="campus">Campus</label>
+        <select id="campus" v-model="form.campus">
+          <option value="BELLVILLE">Bellville</option>
+          <option value="DISTRICT_SIX">District Six</option>
+          <option value="GRANGER_BAY">Granger Bay</option>
+          <option value="MOWBRAY">Mowbray</option>
+          <option value="WELLINGTON">Wellington</option>
+        </select>
+        <p class="field-hint">Where a buyer can meet you to collect it.</p>
       </div>
 
       <ImageUploadInput v-if="!initial" v-model="form.images" />

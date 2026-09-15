@@ -67,8 +67,8 @@ public class ProductService {
         this.savedSearchService = savedSearchService;
     }
 
-    /** US3.1 category, US3.2 keyword, US3.3 price range — any combination, all optional. */
-    public List<ProductResponse> search(Category category, String keyword, BigDecimal minPrice, BigDecimal maxPrice) {
+    /** US3.1 category, campus, US3.2 keyword, US3.3 price range — any combination, all optional. */
+    public List<ProductResponse> search(Category category, Campus campus, String keyword, BigDecimal minPrice, BigDecimal maxPrice) {
         List<Specification<Product>> filters = new ArrayList<>();
         filters.add(ProductSpecifications.isActive());
         // Sold-out listings have nothing left to buy — keep them off the browse/search
@@ -77,6 +77,9 @@ public class ProductService {
         filters.add(ProductSpecifications.notSold());
         if (category != null) {
             filters.add(ProductSpecifications.hasCategory(category));
+        }
+        if (campus != null) {
+            filters.add(ProductSpecifications.hasCampus(campus));
         }
         if (keyword != null && !keyword.isBlank()) {
             filters.add(ProductSpecifications.keywordMatches(keyword));
@@ -139,6 +142,7 @@ public class ProductService {
                 .price(request.getPrice())
                 .category(request.getCategory())
                 .condition(request.getCondition())
+                .campus(request.getCampus())
                 .quantity(request.getQuantityOrDefault())
                 .imageUrls(imageUrls)
                 .active(true)
@@ -165,6 +169,7 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setCategory(request.getCategory());
         product.setCondition(request.getCondition());
+        product.setCampus(request.getCampus());
         product.setQuantity(request.getQuantity());
 
         Product saved = productRepository.save(product);

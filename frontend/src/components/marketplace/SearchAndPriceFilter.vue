@@ -1,10 +1,19 @@
 <script setup>
 const props = defineProps({
   keyword: { type: String, default: "" },
+  campus: { type: String, default: "" },
   minPrice: { type: [String, Number], default: "" },
   maxPrice: { type: [String, Number], default: "" },
 });
-const emit = defineEmits(["update:keyword", "update:minPrice", "update:maxPrice"]);
+const emit = defineEmits(["update:keyword", "update:campus", "update:minPrice", "update:maxPrice"]);
+
+const campusLabels = {
+  BELLVILLE: "Bellville",
+  DISTRICT_SIX: "District Six",
+  GRANGER_BAY: "Granger Bay",
+  MOWBRAY: "Mowbray",
+  WELLINGTON: "Wellington",
+};
 </script>
 
 <template>
@@ -18,6 +27,13 @@ const emit = defineEmits(["update:keyword", "update:minPrice", "update:maxPrice"
         placeholder="e.g. Lenovo Legion laptop"
         @input="$emit('update:keyword', $event.target.value)"
       />
+    </div>
+    <div class="field" style="flex: 1 1 140px; margin-bottom: 0">
+      <label for="campus">Campus</label>
+      <select id="campus" :value="campus" @change="$emit('update:campus', $event.target.value)">
+        <option value="">All Campuses</option>
+        <option v-for="(label, value) in campusLabels" :key="value" :value="value">{{ label }}</option>
+      </select>
     </div>
     <div class="field" style="flex: 1 1 100px; margin-bottom: 0">
       <label for="minPrice">Min price (R)</label>

@@ -3,6 +3,7 @@ package za.ac.cput.cputrade.product.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import za.ac.cput.cputrade.product.Campus;
 import za.ac.cput.cputrade.product.Category;
 import za.ac.cput.cputrade.product.Condition;
 import za.ac.cput.cputrade.product.Product;
@@ -24,6 +25,8 @@ public class ProductResponse {
     private BigDecimal price;
     private Category category;
     private Condition condition;
+    /** Null for a listing created before the campus filter existed and never since edited. */
+    private Campus campus;
     /** How many identical units the seller has (informational — no cart/order flow decrements it). */
     private int quantity;
     /** The first photo, if any — kept for callers that only ever show one cover image (e.g. the marketplace grid). */
@@ -61,6 +64,7 @@ public class ProductResponse {
                 .price(product.getPrice())
                 .category(product.getCategory())
                 .condition(product.getCondition())
+                .campus(product.getCampus())
                 .quantity(product.getQuantity())
                 .imageUrl(images.isEmpty() ? null : images.get(0))
                 .imageUrls(images)

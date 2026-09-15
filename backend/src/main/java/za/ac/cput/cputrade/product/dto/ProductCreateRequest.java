@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import za.ac.cput.cputrade.product.Campus;
 import za.ac.cput.cputrade.product.Category;
 import za.ac.cput.cputrade.product.Condition;
 
@@ -33,6 +34,9 @@ public class ProductCreateRequest {
 
     @NotNull
     private Condition condition;
+
+    @NotNull
+    private Campus campus;
 
     /** How many identical units the seller has. Defaults to 1 if omitted. */
     @Min(value = 1, message = "quantity must be at least 1")

@@ -66,6 +66,14 @@ const conditionLabels = {
   POOR: "Poor",
 };
 
+const campusLabels = {
+  BELLVILLE: "Bellville",
+  DISTRICT_SIX: "District Six",
+  GRANGER_BAY: "Granger Bay",
+  MOWBRAY: "Mowbray",
+  WELLINGTON: "Wellington",
+};
+
 function formatPrice(price) {
   const value = Number(price);
   return value === 0 ? "R0 · Free" : `R${value.toFixed(2).replace(/\.00$/, "")}`;
@@ -154,6 +162,9 @@ async function handleMarkAvailable() {
       <WishlistButton :product="product" size="lg" />
     </div>
     <span v-if="product.freecycle" class="badge badge-free" style="margin-top: var(--space-2)">♻️ Freecycle</span>
+    <span v-if="product.campus" class="badge badge-condition" style="margin-top: var(--space-2)">
+      📍 {{ campusLabels[product.campus] || product.campus }}
+    </span>
 
     <h3>{{ product.title }}</h3>
     <p style="white-space: pre-wrap">{{ product.description }}</p>

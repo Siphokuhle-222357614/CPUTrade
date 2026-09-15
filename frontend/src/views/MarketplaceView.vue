@@ -17,6 +17,7 @@ const CACHE_KEY = "marketplace_all";
 const auth = useAuthStore();
 const toast = useToastStore();
 const category = ref(null);
+const campus = ref("");
 const keyword = ref("");
 const minPrice = ref("");
 const maxPrice = ref("");
@@ -53,10 +54,11 @@ let debounceTimer = null;
 async function load() {
   loading.value = true;
   errorMessage.value = "";
-  const noFilters = !category.value && !keyword.value && !minPrice.value && !maxPrice.value;
+  const noFilters = !category.value && !campus.value && !keyword.value && !minPrice.value && !maxPrice.value;
   try {
     const { data } = await listProducts({
       category: category.value,
+      campus: campus.value,
       keyword: keyword.value,
       minPrice: minPrice.value,
       maxPrice: maxPrice.value,
@@ -88,9 +90,9 @@ function debouncedLoad() {
   debounceTimer = setTimeout(load, 300);
 }
 
-// Category changes reload immediately; free-text/price fields debounce so we
-// don't hammer the API on every keystroke.
-watch(category, load);
+// Category/campus changes reload immediately; free-text/price fields debounce
+// so we don't hammer the API on every keystroke.
+watch([category, campus], load);
 watch([keyword, minPrice, maxPrice], debouncedLoad);
 onMounted(load);
 onBeforeUnmount(() => clearTimeout(debounceTimer));
@@ -144,7 +146,12 @@ const heroStats = computed(() => {
   </div>
 
   <CategoryFilterPills v-model="category" />
-  <SearchAndPriceFilter v-model:keyword="keyword" v-model:min-price="minPrice" v-model:max-price="maxPrice" />
+  <SearchAndPriceFilter
+    v-model:keyword="keyword"
+    v-model:campus="campus"
+    v-model:min-price="minPrice"
+    v-model:max-price="maxPrice"
+  />
   <div v-if="canSaveSearch" class="row" style="justify-content: flex-end; margin: calc(var(--space-4) * -1) 0 var(--space-4)">
     <button type="button" class="btn btn-outline btn-sm" :disabled="savingSearch" @click="saveCurrentSearch">
       🔔 {{ savingSearch ? "Saving…" : "Notify me about listings like this" }}

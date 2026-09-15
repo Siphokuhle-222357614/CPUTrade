@@ -1,8 +1,9 @@
 import client from "./client";
 
-export function listProducts({ category, keyword, minPrice, maxPrice } = {}) {
+export function listProducts({ category, campus, keyword, minPrice, maxPrice } = {}) {
   const params = {};
   if (category) params.category = category;
+  if (campus) params.campus = campus;
   if (keyword) params.keyword = keyword;
   if (minPrice !== undefined && minPrice !== null && minPrice !== "") params.minPrice = minPrice;
   if (maxPrice !== undefined && maxPrice !== null && maxPrice !== "") params.maxPrice = maxPrice;

@@ -58,6 +58,19 @@ public class Product {
     private Condition condition;
 
     /**
+     * Which CPUT campus this listing can be picked up/met at — required on
+     * every new listing (see {@code ProductCreateRequest}) but left nullable
+     * here rather than backfilled, so every listing that existed before this
+     * field was added just shows no campus badge and sits outside every
+     * specific campus filter (only visible under "All Campuses") until its
+     * seller edits it, instead of a MySQL implicit-default silently picking
+     * the wrong one for all of them the way {@link #quantity} once did.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private Campus campus;
+
+    /**
      * How many identical units the seller has left (e.g. a vendor with 10 of
      * the same phone case) — decremented by one each time
      * {@code ProductService#markSold} is called, rather than always closing

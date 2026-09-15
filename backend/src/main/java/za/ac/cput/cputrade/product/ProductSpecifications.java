@@ -27,6 +27,10 @@ public final class ProductSpecifications {
         return (root, query, cb) -> cb.equal(root.get("category"), category);
     }
 
+    public static Specification<Product> hasCampus(Campus campus) {
+        return (root, query, cb) -> cb.equal(root.get("campus"), campus);
+    }
+
     /** Free-text match across title and description (US3.2). */
     public static Specification<Product> keywordMatches(String keyword) {
         String like = "%" + keyword.toLowerCase() + "%";
