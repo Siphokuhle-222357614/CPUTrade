@@ -3,10 +3,12 @@
 --
 -- Logs in as: username `admin`, password `Admin123!`
 -- Change the password before this ever runs anywhere but localhost.
+--
+-- Safe to run more than once: INSERT IGNORE skips it if `admin` already exists.
 
 USE cputrade;
 
-INSERT INTO users (username, email, campus_handle, password_hash, role, verified, vendor_approved, created_at)
+INSERT IGNORE INTO users (username, email, campus_handle, password_hash, role, verified, vendor_approved, account_status, created_at)
 VALUES (
   'admin',
   'admin@cputmarket.ac.za',
@@ -15,5 +17,6 @@ VALUES (
   'ADMIN',
   true,
   true,
+  'ACTIVE', -- NOT NULL with no database default, so it must be set explicitly
   NOW()
 );

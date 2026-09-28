@@ -47,7 +47,7 @@ Run `backend/db/setup.sql` (as root, once) against your production MySQL to
 create the `cputrade` database and the `cputrade_app` user — edit the
 password in that file first, and use the same value for `DB_PASSWORD` above.
 Full steps, including the first-boot-then-seed-admin sequence, are in
-`backend/README.md`; they're identical for production, just pointed at a
+the main `README.md` (Steps 1–3); they're identical for production, just pointed at a
 different host.
 
 `spring.jpa.hibernate.ddl-auto=update` is still in effect — convenient for
@@ -126,7 +126,7 @@ them if the brand mark ever changes; there's nothing to do at deploy time.
 ## 5. First admin account
 
 There's no self-registration path to ADMIN by design (see
-`backend/README.md`). Seed one the same way as local dev:
+the main `README.md`). Seed one the same way as local dev:
 `backend/db/seed-admin.sql`, run once against production after the app's
 first boot has created the `users` table — change that file's password hash
 first (it currently seeds a documented dev password).
