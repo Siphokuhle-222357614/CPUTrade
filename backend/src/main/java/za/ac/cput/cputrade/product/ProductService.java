@@ -248,7 +248,7 @@ public class ProductService {
      */
     @Transactional
     public ProductResponse markSold(Long id, MarkSoldRequest request, Authentication auth) {
-        Product product = findByIdOrThrow(id);
+        Product product = findByIdForUpdateOrThrow(id);
         requireOwnerOrAdmin(product, auth);
 
         if (product.isSold()) {
@@ -304,7 +304,7 @@ public class ProductService {
      */
     @Transactional
     public ProductResponse confirmReceived(Long id, Authentication auth) {
-        Product product = findByIdOrThrow(id);
+        Product product = findByIdForUpdateOrThrow(id);
         User buyer = currentUser(auth);
 
         if (!product.isSold() || product.getSoldTo() == null) {
@@ -339,7 +339,7 @@ public class ProductService {
      */
     @Transactional
     public ProductResponse markAvailable(Long id, Authentication auth) {
-        Product product = findByIdOrThrow(id);
+        Product product = findByIdForUpdateOrThrow(id);
         requireOwnerOrAdmin(product, auth);
 
         product.setSold(false);
@@ -411,6 +411,12 @@ public class ProductService {
             urls.add(imageStorageService.store(base64Image)); // validates, then writes to disk
         }
         return urls;
+    }
+
+    /** For stock/sale changes: takes a row lock so concurrent requests can't overwrite each other. */
+    private Product findByIdForUpdateOrThrow(Long id) {
+        return productRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> ApiException.notFound("Listing not found"));
     }
 
     private Product findByIdOrThrow(Long id) {

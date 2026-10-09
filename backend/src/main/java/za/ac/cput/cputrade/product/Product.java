@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * A product listing (US2.1, US2.2, US3.1, US6.3).
  *
- * <p>Photos are validated (JPEG/PNG, decoded size &lt;= 500KB — see
+ * <p>Photos are validated (JPEG/PNG, decoded size &lt;= 4MB — see
  * {@code ImageValidator}) and written to disk by {@code ImageStorageService}
  * before this entity is ever persisted; {@code imageUrls} only ever holds
  * the resulting URLs, never the image bytes themselves.

@@ -88,7 +88,7 @@ CPUTrade is a marketplace **only for the CPUT community**:
 
 | Area | What you can do |
 |---|---|
-| **Listings** | Create, edit and delete listings with up to **6 photos** (JPEG/PNG, max 500 KB each), a quantity, condition and campus. Price `0` shows a **Freecycle** (free) badge. |
+| **Listings** | Create, edit and delete listings with up to **6 photos** (JPEG/PNG, max 4 MB each), a quantity, condition and campus. Price `0` shows a **Freecycle** (free) badge. |
 | **Swap / barter** | Mark a listing **"open to swap"** and say what you'd swap it for. |
 | **Mark as sold** | Choose which interested buyer bought it. The listing stays up while quantity remains. |
 | **Buyer confirmation** | The buyer confirms they received the item, which unlocks rating the seller. |

@@ -1,11 +1,11 @@
 <script setup>
 import { ref } from "vue";
 
-// US2.1: JPEG/PNG only, decoded size <= 500KB per photo. This is a fast
+// US2.1: JPEG/PNG only, decoded size <= 4MB per photo. This is a fast
 // client-side pre-check for UX only — the server re-validates on the
 // decoded bytes, since Base64 inflates size by ~33% and the client can't be
 // trusted. Up to MAX_PHOTOS per listing, matching the server-side cap.
-const MAX_BYTES = 500 * 1024;
+const MAX_BYTES = 4 * 1024 * 1024;
 const MAX_PHOTOS = 6;
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 
@@ -54,7 +54,7 @@ async function handleFileChange(event) {
       continue;
     }
     if (file.size > MAX_BYTES) {
-      error.value = `"${file.name}" is ${(file.size / 1024).toFixed(0)}KB — the limit is 500KB.`;
+      error.value = `"${file.name}" is ${(file.size / 1024).toFixed(0)}KB — the limit is 4MB.`;
       continue;
     }
     accepted.push(await readAsBase64(file));
@@ -74,7 +74,7 @@ function removePhoto(index) {
 
 <template>
   <div class="field">
-    <label>Photos (JPEG/PNG, max 500KB each, up to {{ MAX_PHOTOS }})</label>
+    <label>Photos (JPEG/PNG, max 4MB each, up to {{ MAX_PHOTOS }})</label>
     <input
       type="file"
       accept="image/jpeg,image/png"

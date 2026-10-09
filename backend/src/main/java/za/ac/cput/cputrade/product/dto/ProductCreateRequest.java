@@ -49,7 +49,7 @@ public class ProductCreateRequest {
     private String swapPreferences;
 
     /**
-     * Base64-encoded JPEG/PNG photos, decoded size capped at 500KB each —
+     * Base64-encoded JPEG/PNG photos, decoded size capped at 4MB each —
      * this is the upload wire format only, {@code ImageStorageService}
      * decodes and writes each one to disk, and only the resulting URLs are
      * ever persisted or returned. Optional; up to 6 per listing.

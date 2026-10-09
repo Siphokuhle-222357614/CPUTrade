@@ -6,12 +6,12 @@ import java.util.Base64;
 
 /**
  * Validates a Base64-encoded product image (US2.1: JPEG/PNG only, max
- * 500KB). Base64 inflates size by ~33%, so the cap is enforced on the
+ * 4MB). Base64 inflates size by ~33%, so the cap is enforced on the
  * <em>decoded</em> byte length, never the raw string length.
  */
 public final class ImageValidator {
 
-    public static final int MAX_IMAGE_BYTES = 500 * 1024; // 500KB
+    public static final int MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4MB
 
     private ImageValidator() {
     }
@@ -26,7 +26,7 @@ public final class ImageValidator {
         }
 
         if (decoded.length > MAX_IMAGE_BYTES) {
-            throw ApiException.badRequest("Image exceeds the 500KB limit");
+            throw ApiException.badRequest("Image exceeds the 4MB limit");
         }
 
         if (!isJpegOrPng(decoded)) {

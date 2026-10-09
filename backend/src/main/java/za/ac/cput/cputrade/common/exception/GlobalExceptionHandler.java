@@ -2,6 +2,7 @@ package za.ac.cput.cputrade.common.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -44,6 +45,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException ex) {
         return body(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    /** E.g. two identical requests racing past a duplicate check — the database's unique key wins. */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Object> handleDataIntegrity(DataIntegrityViolationException ex) {
+        log.warn("Data integrity violation", ex);
+        return body(HttpStatus.CONFLICT, "That was already recorded. Refresh and try again.");
     }
 
     @ExceptionHandler(Exception.class)

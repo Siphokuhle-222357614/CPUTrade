@@ -26,6 +26,11 @@ still boot without them (falling back to the dev-only values in
 | `CORS_ALLOWED_ORIGIN` | The exact origin your deployed frontend is served from (no trailing slash). | `https://cputrade.example.com` |
 | `PORT` | Only needed if your host assigns one (Render/Railway/Heroku do this automatically). | `10000` |
 
+**Production mode:** start the backend with `SPRING_PROFILES_ACTIVE=prod`. In
+that mode it refuses to boot if `JWT_SECRET` (or `DB_PASSWORD`, or
+`VAPID_PRIVATE_KEY`) still has the dev value from this repo, or if the JWT
+secret is shorter than 32 characters. Local development is unaffected.
+
 Set these however your host expects (platform dashboard, `systemd`
 `Environment=` lines, a `.env` file read by your process manager — Spring
 Boot itself doesn't read `.env` files, so if you use one, load it into the
@@ -133,14 +138,15 @@ first (it currently seeds a documented dev password).
 
 ## Known limitations (deliberately out of scope so far)
 
-- **No login rate-limiting** — repeated failed `/api/auth/login` attempts
-  aren't throttled. Fine for a class project's traffic; add one (e.g.
-  Bucket4j, or your reverse proxy's own rate limiting) before this handles
-  real, unknown users.
+- **Login rate-limiting is in-memory and per instance** — 5 wrong passwords
+  for the same username from the same address locks that combination out for
+  15 minutes (HTTP 429). Fine for one backend process; if you ever run
+  several instances, move the counters to a shared store or the reverse proxy.
 - **No real email** — `EmailNotifier`'s only implementation
   (`NoOpEmailNotifier`) logs instead of sending. Swap in a real provider
   (EmailJS, SMTP, SES) by adding a second `EmailNotifier` implementation and
   marking it `@Primary` — nothing else in the codebase needs to change.
-- **No automated tests** — verification so far has been manual curl smoke
-  tests per story plus `npm run build`/`mvnw compile`. Worth adding before
-  any further changes, especially before onboarding a second contributor.
+- **Limited automated tests** — unit tests cover login/registration rules,
+  JWT handling, image validation, the login rate limiter and the production
+  secrets check (`./mvnw test`). The marketplace, chat, rating and admin flows are
+  still verified manually; extend the tests before onboarding a second contributor.

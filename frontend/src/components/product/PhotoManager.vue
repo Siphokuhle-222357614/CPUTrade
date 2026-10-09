@@ -7,7 +7,7 @@ import { addProductImages, removeProductImage } from "../../api/products";
 // behind one "Save"), since photos are stored server-side as files rather
 // than form state, and re-encoding the ones you're keeping just to satisfy
 // a "full replace" save would be wasteful and easy to get wrong.
-const MAX_BYTES = 500 * 1024;
+const MAX_BYTES = 4 * 1024 * 1024;
 const MAX_PHOTOS = 6;
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 
@@ -61,7 +61,7 @@ async function handleFileChange(event) {
       continue;
     }
     if (file.size > MAX_BYTES) {
-      error.value = `"${file.name}" is ${(file.size / 1024).toFixed(0)}KB — the limit is 500KB.`;
+      error.value = `"${file.name}" is ${(file.size / 1024).toFixed(0)}KB — the limit is 4MB.`;
       continue;
     }
     accepted.push(await readAsBase64(file));
