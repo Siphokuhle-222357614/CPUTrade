@@ -1,5 +1,5 @@
 -- DEMO data for presentations: realistic users, listings WITH photos, and
--- bulletin posts. Run against a demo database only (e.g. cputrade_demo),
+-- bulletin posts. Run against a demo database only (e.g. cputrade),
 -- AFTER the backend has booted once and AFTER seed-admin.sql.
 --
 -- Photos are real files under backend/uploads/products/demo-*.jpg (free
@@ -11,7 +11,7 @@
 --   campusprint                            VENDOR (approved)
 --   quickfix_it                            VENDOR (NOT approved — admin approves it live in the demo)
 
-USE cputrade_demo;
+USE cputrade;
 
 INSERT IGNORE INTO users (username, email, campus_handle, password_hash, role, verified, vendor_approved, account_status, created_at)
 VALUES

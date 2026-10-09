@@ -119,6 +119,35 @@ const heroStats = computed(() => {
     today: listings.filter((p) => formatDayLabel(p.createdAt) === "Today").length,
   };
 });
+
+// Hero numbers count up to their value (and re-count when they change) instead of just appearing.
+function animateCount(el, from, to) {
+  cancelAnimationFrame(el._raf);
+  const target = Number(to) || 0;
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  if (reduce || from === target) {
+    el.textContent = target;
+    el.dataset.shown = target;
+    return;
+  }
+  const start = performance.now();
+  const duration = 900;
+  const tick = (now) => {
+    const t = Math.min((now - start) / duration, 1);
+    const value = Math.round(from + (target - from) * (1 - Math.pow(1 - t, 3)));
+    el.textContent = value;
+    el.dataset.shown = value;
+    if (t < 1) el._raf = requestAnimationFrame(tick);
+  };
+  el._raf = requestAnimationFrame(tick);
+}
+const vCountUp = {
+  mounted: (el, { value }) => animateCount(el, 0, value),
+  updated: (el, { value, oldValue }) => {
+    if (value !== oldValue) animateCount(el, Number(el.dataset.shown ?? oldValue ?? 0), value);
+  },
+  unmounted: (el) => cancelAnimationFrame(el._raf),
+};
 </script>
 
 <template>
@@ -128,19 +157,19 @@ const heroStats = computed(() => {
       <p class="hero-subtitle">Textbooks, tech, clothes and more — from fellow CPUT students.</p>
       <div class="hero-stats">
         <div class="hero-stat">
-          <strong>{{ heroStats.total }}</strong>
+          <strong v-count-up="heroStats.total"></strong>
           <span>Live listings</span>
         </div>
         <div class="hero-stat">
-          <strong>{{ heroStats.today }}</strong>
+          <strong v-count-up="heroStats.today"></strong>
           <span>Posted today</span>
         </div>
         <div class="hero-stat">
-          <strong>{{ heroStats.free }}</strong>
+          <strong v-count-up="heroStats.free"></strong>
           <span>♻️ Free right now</span>
         </div>
         <div class="hero-stat">
-          <strong>{{ heroStats.categories }}</strong>
+          <strong v-count-up="heroStats.categories"></strong>
           <span>Categories active</span>
         </div>
       </div>

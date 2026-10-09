@@ -1,0 +1,177 @@
+/* Motion layer (Oct 2026): the "alive" touches on top of base.css's motion
+   vocabulary. Purely decorative: nothing here carries information, and the
+   global prefers-reduced-motion rule in base.css switches it all off.
+   To remove it, delete its import from main.js. */
+
+@keyframes hero-flow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes shine-sweep {
+  0% {
+    transform: translateX(-130%) skewX(-20deg);
+  }
+  60%,
+  100% {
+    transform: translateX(260%) skewX(-20deg);
+  }
+}
+
+@keyframes sell-glow {
+  0%,
+  100% {
+    box-shadow: 0 6px 16px rgba(13, 148, 136, 0.32), 0 0 0 0 rgba(20, 184, 166, 0.55);
+  }
+  60% {
+    box-shadow: 0 6px 16px rgba(13, 148, 136, 0.32), 0 0 0 9px rgba(20, 184, 166, 0);
+  }
+}
+
+@keyframes free-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.35);
+  }
+  60% {
+    box-shadow: 0 0 0 6px rgba(13, 148, 136, 0);
+  }
+}
+
+@keyframes heart-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.55) rotate(-8deg);
+  }
+  65% {
+    transform: scale(0.9) rotate(4deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes pill-pop {
+  0% {
+    transform: scale(0.9);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes brand-spin {
+  from {
+    transform: rotate(-180deg) scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Hero: the gradient slowly flows, the stat tiles pop in one after another and then float. */
+  .hero-band {
+    background-size: 220% 220%;
+    animation: hero-flow 16s ease-in-out infinite;
+  }
+  .hero-stat {
+    animation: pop-in 0.55s var(--ease-spring) both, float-y 5.5s ease-in-out 0.8s infinite;
+  }
+  .hero-stat:nth-child(1) {
+    animation-delay: 0.1s, 0.9s;
+  }
+  .hero-stat:nth-child(2) {
+    animation-delay: 0.22s, 1.6s;
+  }
+  .hero-stat:nth-child(3) {
+    animation-delay: 0.34s, 2.3s;
+  }
+  .hero-stat:nth-child(4) {
+    animation-delay: 0.46s, 3s;
+  }
+
+  /* "Just sold" strip: a light sweep that keeps drawing the eye to live activity. */
+  .activity-ticker {
+    position: relative;
+  }
+  .activity-ticker::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 40%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    animation: shine-sweep 4.5s ease-in-out 1.2s infinite;
+    pointer-events: none;
+  }
+
+  /* Buttons: a shine passes over on hover; the "+ Sell" button pulses gently. */
+  .btn-primary,
+  .btn-accent {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::after,
+  .btn-accent::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 45%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transform: translateX(-130%) skewX(-20deg);
+    pointer-events: none;
+  }
+  .btn-primary:hover:not(:disabled)::after,
+  .btn-accent:hover:not(:disabled)::after {
+    animation: shine-sweep 0.9s ease-out;
+  }
+  .navbar .btn-accent {
+    animation: sell-glow 2.8s ease-in-out infinite;
+  }
+
+  /* Playful details. */
+  .brand-icon {
+    animation: brand-spin 0.9s var(--ease-spring) both;
+  }
+  .wishlist-btn.active {
+    animation: heart-pop 0.5s var(--ease-spring);
+  }
+  .pill.active {
+    animation: pill-pop 0.35s var(--ease-spring);
+  }
+  .badge-free {
+    animation: free-glow 2.6s ease-out infinite;
+  }
+
+  /* Any plain card (dashboard tiles, detail panel, admin lists) eases in
+     instead of appearing. Product cards already have their own staggered entrance. */
+  .card:not(.product-card) {
+    animation: fade-in-up 0.45s ease both;
+  }
+}
