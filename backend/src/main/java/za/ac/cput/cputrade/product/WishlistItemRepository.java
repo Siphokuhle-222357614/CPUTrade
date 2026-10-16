@@ -22,4 +22,6 @@ public interface WishlistItemRepository extends JpaRepository<WishlistItem, Long
 
     /** So a hard-deleted listing doesn't leave orphaned wishlist rows behind an FK constraint. */
     void deleteByProductId(Long productId);
+
+    void deleteByUserId(Long userId);
 }

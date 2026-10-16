@@ -61,6 +61,8 @@ public class NotificationService {
             case SAVED_SEARCH_MATCH -> "A new listing matches your search 🔎";
             case CONFIRM_RECEIPT_REQUESTED -> "Confirm your CPUTrade purchase";
             case RECEIPT_CONFIRMED -> "Sale confirmed ✅";
+            case ORDER_READY_FOR_HANDOFF -> "Your order is ready";
+            case ORDER_CANCELLED -> "Order cancelled";
         };
     }
 

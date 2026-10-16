@@ -1,7 +1,11 @@
 # Demo run sheet
 
-Superseded by **PRESENTER-GUIDE.md**, which has the 3-presenter plan, the clicks, what to say, likely questions
-and how to reset between takes (`reset-live-demo.sql`).
+Use [PRESENTER-GUIDE.md](./PRESENTER-GUIDE.md) for the timed, under-10-minute
+video walkthrough and navigation cues. Use
+[LOCAL-TESTING-CHECKLIST.md](./LOCAL-TESTING-CHECKLIST.md) for local manual and
+automated acceptance checks.
 
-Start the app with `.\demo\start-demo.ps1`. Demo accounts: `thabo_s`, `lerato_m`, `aisha_n`, `sizwe_d`, `campusprint`,
-`quickfix_it` (password `Password123!`); admin: `admin` / `Admin123!`.
+Start the local app with `.\demo\start-demo.ps1` from the repository root.
+Prepare already-authenticated buyer, seller, and admin browser profiles before
+recording. Use a disposable local database; order history is not removed by
+`reset-live-demo.sql`.

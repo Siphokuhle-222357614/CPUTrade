@@ -32,3 +32,7 @@ export function getSuspendedUsers() {
 export function getAllUsers() {
   return client.get("/admin/users");
 }
+
+export function getAdminActionHistory() {
+  return client.get("/admin/history");
+}

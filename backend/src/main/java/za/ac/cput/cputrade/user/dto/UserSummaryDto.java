@@ -31,8 +31,8 @@ public class UserSummaryDto {
     public static UserSummaryDto from(User user) {
         return UserSummaryDto.builder()
                 .id(user.getId())
-                .username(user.getUsername())
-                .campusHandle(user.getCampusHandle())
+                .username(user.getDisplayName())
+                .campusHandle(user.getAccountStatus() == AccountStatus.DELETED ? null : user.getCampusHandle())
                 .role(user.getRole())
                 .verified(user.isVerified())
                 .vendorApproved(user.isVendorApproved())

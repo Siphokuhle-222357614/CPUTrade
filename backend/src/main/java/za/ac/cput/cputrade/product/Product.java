@@ -72,14 +72,12 @@ public class Product {
 
     /**
      * How many identical units the seller has left (e.g. a vendor with 10 of
-     * the same phone case) — decremented by one each time
-     * {@code ProductService#markSold} is called, rather than always closing
-     * out the whole listing on the first sale. Only reaches 0 once every unit
-     * has sold, at which point {@link #sold} flips true and the listing
-     * leaves marketplace search; while &gt;= 1 the listing stays up with a
-     * "×N left" badge. There's still no full cart/order flow — this is a
-     * running count, not a line-itemed order history, so only the sale that
-     * empties it records {@link #soldTo}/{@link #soldAt}.
+     * the same phone case) — decremented by one when the seller records a sale
+     * or a checkout is completed. The listing stays available while stock
+     * remains; when it reaches 0, {@link #sold} flips true and it leaves
+     * marketplace search. Checkout history is stored separately in
+     * {@code PurchaseOrder}; {@link #soldTo}/{@link #soldAt} continue to
+     * describe the legacy seller-recorded sale that empties stock.
      *
      * <p>{@code @ColumnDefault} matters here, not just {@code @Builder.Default}:
      * without it, adding this NOT NULL column to a table that already has

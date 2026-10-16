@@ -39,6 +39,11 @@ const soldBurstKey = ref(0);
 
 const isOwner = computed(() => auth.user?.id === props.product.sellerId);
 const canManage = computed(() => isOwner.value || auth.isAdmin);
+const canStartCheckout = computed(
+  () => !auth.isAdmin && !isOwner.value && props.product.active
+    && !props.product.sold && props.product.quantity > 0
+);
+const canCheckout = computed(() => auth.isAuthenticated && canStartCheckout.value);
 // Once it's sold there's nothing left to buy, so starting a new chat about it is a dead end.
 const canMessageSeller = computed(() => auth.isAuthenticated && !isOwner.value && !props.product.sold);
 // Whether *this* logged-in user is the specific buyer the seller named when marking it
@@ -96,6 +101,10 @@ const campusLabels = {
 function formatPrice(price) {
   const value = Number(price);
   return value === 0 ? "R0 · Free" : `R${value.toFixed(2).replace(/\.00$/, "")}`;
+}
+
+function openCheckout() {
+  router.push({ name: "checkout", params: { id: props.product.id } });
 }
 
 // A student sharing a listing into a res/campus WhatsApp group is the
@@ -233,6 +242,21 @@ async function handleMarkAvailable() {
     </div>
 
     <div class="row" style="margin-top: var(--space-4)">
+      <router-link
+        v-if="canStartCheckout && !auth.isAuthenticated"
+        :to="{ name: 'login', query: { redirect: `/checkout/${product.id}` } }"
+        class="btn btn-accent"
+      >
+        Log in to buy
+      </router-link>
+      <button
+        v-if="canCheckout"
+        type="button"
+        class="btn btn-accent"
+        @click="openCheckout"
+      >
+        🛒 Buy this item
+      </button>
       <button v-if="canMessageSeller" type="button" class="btn btn-primary" :disabled="messaging" @click="handleMessageSeller">
         {{ messaging ? "Starting chat…" : "💬 Message Seller" }}
       </button>

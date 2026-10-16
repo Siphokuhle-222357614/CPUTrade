@@ -47,14 +47,18 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
-    /**
-     * US1.3 (stubbed): set to {@code true} immediately on registration since
-     * no real email is sent yet. A future real EmailJS/SMTP integration would
-     * set this to {@code false} until the user clicks a verification link.
-     */
     @Column(nullable = false)
     @Builder.Default
     private boolean verified = false;
+
+    @Column(name = "email_verification_token_hash", unique = true, length = 64)
+    private String emailVerificationTokenHash;
+
+    @Column(name = "email_verification_expires_at")
+    private LocalDateTime emailVerificationExpiresAt;
+
+    @Column(name = "email_verification_sent_at")
+    private LocalDateTime emailVerificationSentAt;
 
     /**
      * US1.5: {@code true} by default for STUDENT/ADMIN; a VENDOR starts
@@ -104,5 +108,9 @@ public class User {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    public String getDisplayName() {
+        return accountStatus == AccountStatus.DELETED ? "Deleted account" : username;
     }
 }

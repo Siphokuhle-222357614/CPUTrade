@@ -22,7 +22,7 @@ public class RatingResponse {
         return RatingResponse.builder()
                 .id(rating.getId())
                 .productId(rating.getProduct().getId())
-                .raterUsername(rating.getRater().getUsername())
+                .raterUsername(rating.getRater().getDisplayName())
                 .score(rating.getScore())
                 .comment(rating.getComment())
                 .createdAt(rating.getCreatedAt())

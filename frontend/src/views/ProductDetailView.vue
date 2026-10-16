@@ -26,7 +26,7 @@ async function load() {
     product.value = data;
     saveCache(cacheKey, data); // US7.1: remember the last-viewed copy for offline viewing
   } catch (err) {
-    const cached = loadCache(cacheKey);
+    const cached = err.response ? null : loadCache(cacheKey);
     if (cached) {
       product.value = cached.data;
       offline.value = true;

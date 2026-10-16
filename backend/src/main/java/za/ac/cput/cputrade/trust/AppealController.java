@@ -5,6 +5,7 @@ import za.ac.cput.cputrade.trust.dto.AppealRequest;
 import za.ac.cput.cputrade.trust.dto.AppealResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,12 +36,12 @@ public class AppealController {
     }
 
     @PatchMapping("/api/admin/appeals/{id}/approve")
-    public ResponseEntity<AppealResponse> approve(@PathVariable Long id) {
-        return ResponseEntity.ok(appealService.approve(id));
+    public ResponseEntity<AppealResponse> approve(@PathVariable Long id, Authentication actor) {
+        return ResponseEntity.ok(appealService.approve(id, actor));
     }
 
     @PatchMapping("/api/admin/appeals/{id}/reject")
-    public ResponseEntity<AppealResponse> reject(@PathVariable Long id) {
-        return ResponseEntity.ok(appealService.reject(id));
+    public ResponseEntity<AppealResponse> reject(@PathVariable Long id, Authentication actor) {
+        return ResponseEntity.ok(appealService.reject(id, actor));
     }
 }

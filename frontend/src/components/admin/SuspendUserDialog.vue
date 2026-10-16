@@ -62,7 +62,7 @@ async function handleSubmit() {
 
 <template>
   <Modal :open="open" :title="`Suspend ${username}`" @close="emit('close')">
-    <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</p>
     <form @submit.prevent="handleSubmit">
       <div class="field">
         <label for="suspend-reason">Reason</label>
@@ -70,8 +70,8 @@ async function handleSubmit() {
       </div>
       <div class="field">
         <label for="suspend-until">Auto-lift at (optional)</label>
-        <input id="suspend-until" v-model="form.suspendedUntil" type="datetime-local" />
-        <p class="field-hint">Leave blank for an indefinite suspension — the user can still appeal at any time.</p>
+        <input id="suspend-until" v-model="form.suspendedUntil" type="datetime-local" aria-describedby="suspend-until-help" />
+        <p id="suspend-until-help" class="field-hint">Leave blank for an indefinite suspension — the user can still appeal at any time.</p>
       </div>
       <div class="row" style="justify-content: flex-end">
         <button type="button" class="btn btn-outline" @click="emit('close')">Cancel</button>

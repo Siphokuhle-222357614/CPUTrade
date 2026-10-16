@@ -13,8 +13,8 @@
 --
 -- Safe to run more than once: users are INSERT IGNOREd and every listing /
 -- post is skipped if the same author already has one with that title.
--- Listings have no photos (photos are real files under backend/uploads/,
--- not database rows) — add some through the app's Edit listing screen.
+-- Listings have no photos yet. Uploaded files live under backend/uploads/,
+-- while MySQL stores their URLs in product_images. Add photos through the app.
 
 USE cputrade;
 

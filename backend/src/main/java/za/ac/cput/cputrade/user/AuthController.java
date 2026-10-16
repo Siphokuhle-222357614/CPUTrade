@@ -5,8 +5,10 @@ import za.ac.cput.cputrade.common.exception.ApiException;
 import za.ac.cput.cputrade.security.LoginRateLimiter;
 import za.ac.cput.cputrade.user.dto.AuthResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import za.ac.cput.cputrade.user.dto.EmailVerificationRequest;
 import za.ac.cput.cputrade.user.dto.LoginRequest;
 import za.ac.cput.cputrade.user.dto.RegisterRequest;
+import za.ac.cput.cputrade.user.dto.ResendVerificationRequest;
 import za.ac.cput.cputrade.user.dto.UserSummaryDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,18 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<UserSummaryDto> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(@Valid @RequestBody EmailVerificationRequest request) {
+        authService.verifyEmail(request.getToken());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/verification/resend")
+    public ResponseEntity<Void> resendVerificationEmail(@Valid @RequestBody ResendVerificationRequest request) {
+        authService.resendVerificationEmail(request.getEmail());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/login")

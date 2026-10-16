@@ -5,7 +5,19 @@
 // Every read/write is wrapped in try/catch: a private window, cleared site
 // data, or a full quota must never break the page.
 
-const PREFIX = "cputrade_cache_";
+const PREFIX = "cputrade_cache_v2_";
+const LEGACY_PREFIX = "cputrade_cache_";
+
+try {
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith(LEGACY_PREFIX) && !key.startsWith(PREFIX)) {
+      localStorage.removeItem(key);
+    }
+  }
+} catch {
+  // Storage may be unavailable; offline caching is optional.
+}
 
 export function saveCache(key, data) {
   try {

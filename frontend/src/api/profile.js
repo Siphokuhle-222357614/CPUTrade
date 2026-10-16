@@ -7,3 +7,4 @@ export function getPublicProfile(userId) {
 export function getPresence(userId) {
   return client.get(`/users/${userId}/presence`);
 }
+ 

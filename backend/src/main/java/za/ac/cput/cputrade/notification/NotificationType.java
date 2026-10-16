@@ -14,5 +14,9 @@ public enum NotificationType {
     /** Sent to the named buyer when a seller marks a listing sold to them — asks them to confirm receipt. */
     CONFIRM_RECEIPT_REQUESTED,
     /** Sent to the seller once their buyer confirms they actually received the item. */
-    RECEIPT_CONFIRMED
+    RECEIPT_CONFIRMED,
+    /** Sent to the buyer when the seller says an order is ready for hand-off. */
+    ORDER_READY_FOR_HANDOFF,
+    /** Sent to the seller when the buyer cancels an unconfirmed simulated order. */
+    ORDER_CANCELLED
 }

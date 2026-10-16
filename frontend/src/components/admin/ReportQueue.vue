@@ -63,9 +63,9 @@ onMounted(load);
 
 <template>
   <div class="card">
-    <h3>Reports Queue</h3>
-    <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
-    <p v-if="loading">Loading…</p>
+    <h2>Reports Queue</h2>
+    <p v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</p>
+    <p v-if="loading" role="status" aria-live="polite">Loading reports…</p>
     <p v-else-if="!reports.length" class="empty-state">No pending reports — nice and quiet.</p>
 
     <div v-else class="table-list">
@@ -88,6 +88,7 @@ onMounted(load);
           <button
             type="button"
             class="btn btn-outline"
+            :aria-label="`Dismiss report ${report.id}`"
             :disabled="actingId === report.id"
             @click="handleAction(report.id, dismissReport, 'Report dismissed.')"
           >
@@ -97,6 +98,7 @@ onMounted(load);
             v-if="report.reportedUserId"
             type="button"
             class="btn btn-danger"
+            :aria-label="`Suspend ${report.reportedUsername}`"
             :disabled="actingId === report.id"
             @click="suspendTarget = { reportId: report.id, userId: report.reportedUserId, username: report.reportedUsername }"
           >
@@ -105,6 +107,7 @@ onMounted(load);
           <button
             type="button"
             class="btn btn-primary"
+            :aria-label="`Mark report ${report.id} reviewed`"
             :disabled="actingId === report.id"
             @click="handleAction(report.id, reviewReport, 'Report marked reviewed.')"
           >

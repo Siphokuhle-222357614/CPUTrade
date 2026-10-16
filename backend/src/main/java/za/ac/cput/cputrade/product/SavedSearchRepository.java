@@ -9,4 +9,6 @@ public interface SavedSearchRepository extends JpaRepository<SavedSearch, Long> 
     List<SavedSearch> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     void deleteByIdAndUserId(Long id, Long userId);
+
+    void deleteByUserId(Long userId);
 }

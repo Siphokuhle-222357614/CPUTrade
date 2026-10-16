@@ -44,9 +44,9 @@ onMounted(load);
 
 <template>
   <div class="card">
-    <h3>All Listings (Moderation)</h3>
-    <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
-    <p v-if="loading">Loading…</p>
+    <h2>All Listings (Moderation)</h2>
+    <p v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</p>
+    <p v-if="loading" role="status" aria-live="polite">Loading listings…</p>
     <p v-else-if="!listings.length" class="empty-state">No listings yet.</p>
     <div v-else class="table-list">
       <div v-for="product in listings" :key="product.id" class="row">
@@ -59,6 +59,7 @@ onMounted(load);
           v-if="product.active"
           type="button"
           class="btn btn-danger"
+          :aria-label="`Remove listing ${product.title}`"
           :disabled="removingId === product.id"
           @click="pendingDeactivateId = product.id"
         >

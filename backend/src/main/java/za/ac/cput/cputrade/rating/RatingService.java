@@ -1,6 +1,7 @@
 package za.ac.cput.cputrade.rating;
 
 import za.ac.cput.cputrade.common.exception.ApiException;
+import za.ac.cput.cputrade.order.PurchaseOrderRepository;
 import za.ac.cput.cputrade.product.Product;
 import za.ac.cput.cputrade.product.ProductRepository;
 import za.ac.cput.cputrade.rating.dto.RatingRequest;
@@ -16,11 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class RatingService {
 
     private final RatingRepository ratingRepository;
+    private final PurchaseOrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
 
-    public RatingService(RatingRepository ratingRepository, ProductRepository productRepository, UserRepository userRepository) {
+    public RatingService(RatingRepository ratingRepository, PurchaseOrderRepository orderRepository,
+                         ProductRepository productRepository, UserRepository userRepository) {
         this.ratingRepository = ratingRepository;
+        this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
     }
@@ -36,20 +40,23 @@ public class RatingService {
         if (seller.getId().equals(rater.getId())) {
             throw ApiException.badRequest("You cannot rate your own listing");
         }
-        if (!product.isSold()) {
-            throw ApiException.badRequest("You can rate a seller once they've marked this listing as sold");
-        }
-        // When the seller named who they sold it to, only that buyer can rate this sale, and
-        // only once they've confirmed they actually received it -- otherwise a rating is just
-        // the seller's own say-so about their own sale. Sellers who didn't name a buyer (picked
-        // "Prefer not to say") keep the original, more lenient rule below since there's no one
-        // specific to ask for a confirmation from.
-        if (product.getSoldTo() != null) {
-            if (!product.getSoldTo().getId().equals(rater.getId())) {
-                throw ApiException.forbidden("Only the buyer this was sold to can rate this sale");
-            }
-            if (!product.isBuyerConfirmed()) {
+        boolean hasOrder = orderRepository.existsByProductIdAndBuyerId(productId, rater.getId());
+        if (hasOrder) {
+            if (!orderRepository.existsByProductIdAndBuyerIdAndReceivedAtIsNotNull(productId, rater.getId())) {
                 throw ApiException.badRequest("Confirm you received this item before rating the seller");
+            }
+        } else {
+            if (!product.isSold()) {
+                throw ApiException.badRequest("You can rate a seller once they've marked this listing as sold");
+            }
+            // Legacy seller-recorded sales keep their existing receipt-confirmation rule.
+            if (product.getSoldTo() != null) {
+                if (!product.getSoldTo().getId().equals(rater.getId())) {
+                    throw ApiException.forbidden("Only the buyer this was sold to can rate this sale");
+                }
+                if (!product.isBuyerConfirmed()) {
+                    throw ApiException.badRequest("Confirm you received this item before rating the seller");
+                }
             }
         }
         if (ratingRepository.existsByProductIdAndRaterId(productId, rater.getId())) {

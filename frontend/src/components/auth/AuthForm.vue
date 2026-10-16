@@ -2,6 +2,7 @@
 import { reactive, ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "../../stores/auth";
+import * as authApi from "../../api/auth";
 import SuspendedAccountDialog from "./SuspendedAccountDialog.vue";
 
 const auth = useAuthStore();
@@ -14,6 +15,8 @@ const errorMessage = ref("");
 const infoMessage = ref("");
 const showSuspendedDialog = ref(false);
 const suspendedMessage = ref("");
+const showResendVerification = ref(false);
+const verificationEmail = ref("");
 
 const form = reactive({
   username: "",
@@ -29,6 +32,7 @@ function resetMessages() {
 
 async function handleSubmit() {
   resetMessages();
+  showResendVerification.value = false;
   loading.value = true;
   try {
     if (mode.value === "register") {
@@ -41,7 +45,7 @@ async function handleSubmit() {
       infoMessage.value =
         form.role === "VENDOR"
           ? "Account created! A vendor account needs admin approval before you can sell — you can log in now."
-          : "Account created! You can log in now.";
+          : "Account created! A verification link has been sent to your CPUT email. Verify it before signing in; in local development, check the backend log.";
       mode.value = "login";
     } else {
       await auth.login({ username: form.username, password: form.password });
@@ -50,7 +54,12 @@ async function handleSubmit() {
   } catch (err) {
     const message = err.response?.data?.message || "Something went wrong — please try again.";
     const suspended = err.response?.status === 403 && message.toLowerCase().includes("suspended");
-    if (suspended) {
+    const verificationRequired =
+      err.response?.status === 403 && message.toLowerCase().includes("verify your cput email");
+    if (verificationRequired) {
+      showResendVerification.value = true;
+      errorMessage.value = message;
+    } else if (suspended) {
       // A suspension is important enough to interrupt with a popup rather
       // than blend into the usual inline error banner.
       suspendedMessage.value = message;
@@ -58,6 +67,20 @@ async function handleSubmit() {
     } else {
       errorMessage.value = message;
     }
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function handleResendVerification() {
+  resetMessages();
+  loading.value = true;
+  try {
+    await authApi.resendVerification(verificationEmail.value);
+    infoMessage.value =
+      "If that address belongs to an unverified student account, a new link has been sent. Check your inbox or the local backend log.";
+  } catch (err) {
+    errorMessage.value = err.response?.data?.message || "Unable to request a verification link — please try again.";
   } finally {
     loading.value = false;
   }
@@ -89,6 +112,23 @@ async function handleSubmit() {
 
     <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
     <p v-if="infoMessage" class="alert alert-info">{{ infoMessage }}</p>
+    <form
+      v-if="showResendVerification"
+      class="field"
+      @submit.prevent="handleResendVerification"
+    >
+      <label for="verification-email">Resend verification link</label>
+      <input
+        id="verification-email"
+        v-model="verificationEmail"
+        type="email"
+        placeholder="yourname@mycput.ac.za"
+        required
+      />
+      <button type="submit" class="btn btn-secondary" :disabled="loading">
+        {{ loading ? "Please wait…" : "Resend link" }}
+      </button>
+    </form>
 
     <form @submit.prevent="handleSubmit">
       <div class="field">

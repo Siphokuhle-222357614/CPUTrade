@@ -7,6 +7,7 @@ import za.ac.cput.cputrade.profile.dto.PublicProfileResponse;
 import za.ac.cput.cputrade.rating.RatingService;
 import za.ac.cput.cputrade.rating.dto.RatingSummary;
 import za.ac.cput.cputrade.trust.SellerTrust;
+import za.ac.cput.cputrade.user.AccountStatus;
 import za.ac.cput.cputrade.user.User;
 import za.ac.cput.cputrade.user.UserRepository;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,9 @@ public class UserProfileService {
     public PublicProfileResponse getProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("User not found"));
+        if (user.getAccountStatus() == AccountStatus.DELETED) {
+            throw ApiException.notFound("User not found");
+        }
         RatingSummary rating = ratingService.summarize(userId);
         long completedSales = productRepository.countBySellerIdAndSoldTrue(userId);
 
@@ -54,6 +58,9 @@ public class UserProfileService {
     public PresenceResponse getPresence(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("User not found"));
+        if (user.getAccountStatus() == AccountStatus.DELETED) {
+            throw ApiException.notFound("User not found");
+        }
         return PresenceResponse.builder()
                 .online(isOnline(user))
                 .lastActiveAt(user.getLastActiveAt())

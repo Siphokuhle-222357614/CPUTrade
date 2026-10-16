@@ -76,7 +76,7 @@ async function load() {
     // there's no separate endpoint to add just for a few numbers.
     if (noFilters) allListingsForStats.value = data;
   } catch (err) {
-    const cached = noFilters ? loadCache(CACHE_KEY) : null;
+    const cached = !err.response && noFilters ? loadCache(CACHE_KEY) : null;
     if (cached) {
       products.value = cached.data;
       offline.value = true;

@@ -31,7 +31,7 @@ public class ChatMessageResponse {
                 .id(message.getId())
                 .conversationId(message.getConversation().getId())
                 .senderId(message.getSender().getId())
-                .senderUsername(message.getSender().getUsername())
+                .senderUsername(message.getSender().getDisplayName())
                 .body(message.isDeleted() ? null : message.getBody())
                 .locationSuggestion(message.isDeleted() ? null : message.getLocationSuggestion())
                 .createdAt(message.getCreatedAt())

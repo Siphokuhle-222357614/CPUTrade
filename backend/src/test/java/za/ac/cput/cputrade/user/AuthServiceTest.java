@@ -4,7 +4,6 @@ import za.ac.cput.cputrade.common.exception.ApiException;
 import za.ac.cput.cputrade.security.JwtUtil;
 import za.ac.cput.cputrade.user.dto.LoginRequest;
 import za.ac.cput.cputrade.user.dto.RegisterRequest;
-import za.ac.cput.cputrade.user.notification.EmailNotifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,6 +21,8 @@ class AuthServiceTest {
 
     private UserRepository users;
     private PasswordEncoder encoder;
+    private EmailVerificationService emailVerificationService;
+    private AccountStatusService accountStatusService;
     private AuthService service;
 
     @BeforeEach
@@ -29,7 +30,10 @@ class AuthServiceTest {
         users = mock(UserRepository.class);
         encoder = new BCryptPasswordEncoder();
         JwtUtil jwt = new JwtUtil("a-test-secret-that-is-long-enough-for-hmac-sha-256", 60_000);
-        service = new AuthService(users, encoder, jwt, mock(EmailNotifier.class), mock(AccountStatusService.class));
+        emailVerificationService = mock(EmailVerificationService.class);
+        accountStatusService = mock(AccountStatusService.class);
+        when(accountStatusService.resolveStatus(any())).thenAnswer(inv -> inv.getArgument(0));
+        service = new AuthService(users, encoder, jwt, emailVerificationService, accountStatusService);
         when(users.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
     }
 
@@ -61,6 +65,8 @@ class AuthServiceTest {
         User user = savedUser();
         assertEquals(Role.STUDENT, user.getRole());
         assertTrue(user.isVendorApproved());
+        assertFalse(user.isVerified());
+        verify(emailVerificationService).createAndSendVerificationEmail(user);
     }
 
     @Test
@@ -75,6 +81,8 @@ class AuthServiceTest {
         User user = savedUser();
         assertEquals(Role.VENDOR, user.getRole());
         assertFalse(user.isVendorApproved());
+        assertTrue(user.isVerified());
+        verify(emailVerificationService, never()).createAndSendVerificationEmail(any());
     }
 
     @Test
@@ -101,5 +109,49 @@ class AuthServiceTest {
         login.setPassword("wrong-password");
         ApiException e = assertThrows(ApiException.class, () -> service.login(login));
         assertEquals(HttpStatus.UNAUTHORIZED, e.getStatus());
+    }
+
+    @Test
+    void deletedAccountsCannotLogIn() {
+        User user = User.builder().username("deleted-account").passwordHash(encoder.encode("Password123!"))
+                .role(Role.STUDENT).verified(true).accountStatus(AccountStatus.DELETED).build();
+        when(users.findByUsername("deleted-account")).thenReturn(Optional.of(user));
+        LoginRequest login = new LoginRequest();
+        login.setUsername("deleted-account");
+        login.setPassword("Password123!");
+
+        ApiException e = assertThrows(ApiException.class, () -> service.login(login));
+
+        assertEquals(HttpStatus.FORBIDDEN, e.getStatus());
+        assertTrue(e.getMessage().contains("account has been deleted"));
+        verify(accountStatusService, never()).resolveStatus(any());
+    }
+
+    @Test
+    void unverifiedStudentsCannotLogInWithTheCorrectPassword() {
+        User user = User.builder().username("thabo_s").passwordHash(encoder.encode("Password123!"))
+                .role(Role.STUDENT).verified(false).build();
+        when(users.findByUsername("thabo_s")).thenReturn(Optional.of(user));
+        LoginRequest login = new LoginRequest();
+        login.setUsername("thabo_s");
+        login.setPassword("Password123!");
+
+        ApiException e = assertThrows(ApiException.class, () -> service.login(login));
+
+        assertEquals(HttpStatus.FORBIDDEN, e.getStatus());
+        assertTrue(e.getMessage().contains("Verify your CPUT email"));
+        verify(accountStatusService, never()).resolveStatus(any());
+    }
+
+    @Test
+    void verifiedStudentsCanLogIn() {
+        User user = User.builder().username("thabo_s").passwordHash(encoder.encode("Password123!"))
+                .role(Role.STUDENT).verified(true).build();
+        when(users.findByUsername("thabo_s")).thenReturn(Optional.of(user));
+        LoginRequest login = new LoginRequest();
+        login.setUsername("thabo_s");
+        login.setPassword("Password123!");
+
+        assertNotNull(service.login(login).getToken());
     }
 }

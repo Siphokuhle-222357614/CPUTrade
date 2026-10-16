@@ -53,13 +53,13 @@ onMounted(load);
 
 <template>
   <div class="card">
-    <h3>Manage Students &amp; Vendors</h3>
+    <h2>Manage Students &amp; Vendors</h2>
     <p class="field-hint" style="margin-top: 0">
       Suspend an account directly for a protocol violation — a suspended user can appeal, and approving their appeal
       reactivates them automatically.
     </p>
-    <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
-    <p v-if="loading">Loading…</p>
+    <p v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</p>
+    <p v-if="loading" role="status" aria-live="polite">Loading users…</p>
     <p v-else-if="!users.length" class="empty-state">No students or vendors yet.</p>
 
     <div v-else class="table-list">
@@ -78,6 +78,7 @@ onMounted(load);
           v-if="user.accountStatus === 'SUSPENDED'"
           type="button"
           class="btn btn-primary"
+          :aria-label="`Reactivate ${user.username}`"
           :disabled="actingId === user.id"
           @click="handleReactivate(user.id)"
         >
@@ -87,6 +88,7 @@ onMounted(load);
           v-else
           type="button"
           class="btn btn-danger"
+          :aria-label="`Suspend ${user.username}`"
           @click="suspendTarget = { userId: user.id, username: user.username }"
         >
           🚫 Suspend

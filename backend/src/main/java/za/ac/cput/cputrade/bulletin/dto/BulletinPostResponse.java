@@ -25,7 +25,7 @@ public class BulletinPostResponse {
         return BulletinPostResponse.builder()
                 .id(post.getId())
                 .authorId(post.getAuthor().getId())
-                .authorUsername(post.getAuthor().getUsername())
+                .authorUsername(post.getAuthor().getDisplayName())
                 .title(post.getTitle())
                 .body(post.getBody())
                 .type(post.getType())

@@ -27,7 +27,7 @@ public class ProductResponse {
     private Condition condition;
     /** Null for a listing created before the campus filter existed and never since edited. */
     private Campus campus;
-    /** How many identical units the seller has (informational — no cart/order flow decrements it). */
+    /** How many identical units the seller currently has available. */
     private int quantity;
     /** The first photo, if any — kept for callers that only ever show one cover image (e.g. the marketplace grid). */
     private String imageUrl;
@@ -66,7 +66,7 @@ public class ProductResponse {
         return ProductResponse.builder()
                 .id(product.getId())
                 .sellerId(product.getSeller().getId())
-                .sellerUsername(product.getSeller().getUsername())
+                .sellerUsername(product.getSeller().getDisplayName())
                 .title(product.getTitle())
                 .description(product.getDescription())
                 .price(product.getPrice())
@@ -79,7 +79,7 @@ public class ProductResponse {
                 .active(product.isActive())
                 .sold(product.isSold())
                 .soldAt(product.getSoldAt())
-                .soldToUsername(product.getSoldTo() != null ? product.getSoldTo().getUsername() : null)
+                .soldToUsername(product.getSoldTo() != null ? product.getSoldTo().getDisplayName() : null)
                 .soldToUserId(product.getSoldTo() != null ? product.getSoldTo().getId() : null)
                 .buyerConfirmed(product.isBuyerConfirmed())
                 .createdAt(product.getCreatedAt())

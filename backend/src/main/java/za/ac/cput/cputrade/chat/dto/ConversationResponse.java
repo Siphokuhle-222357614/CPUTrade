@@ -26,9 +26,9 @@ public class ConversationResponse {
                 .productId(conversation.getProduct().getId())
                 .productTitle(conversation.getProduct().getTitle())
                 .buyerId(conversation.getBuyer().getId())
-                .buyerUsername(conversation.getBuyer().getUsername())
+                .buyerUsername(conversation.getBuyer().getDisplayName())
                 .sellerId(conversation.getSeller().getId())
-                .sellerUsername(conversation.getSeller().getUsername())
+                .sellerUsername(conversation.getSeller().getDisplayName())
                 .createdAt(conversation.getCreatedAt())
                 .build();
     }

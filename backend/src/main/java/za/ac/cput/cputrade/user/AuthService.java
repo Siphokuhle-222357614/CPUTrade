@@ -6,7 +6,6 @@ import za.ac.cput.cputrade.user.dto.AuthResponse;
 import za.ac.cput.cputrade.user.dto.LoginRequest;
 import za.ac.cput.cputrade.user.dto.RegisterRequest;
 import za.ac.cput.cputrade.user.dto.UserSummaryDto;
-import za.ac.cput.cputrade.user.notification.EmailNotifier;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,26 +15,25 @@ import java.util.regex.Pattern;
 @Service
 public class AuthService {
 
-    // Students self-register with no other verification step, so this is
-    // the trust boundary that makes the platform "CPUT-only" rather than
-    // open to anyone. VENDOR accounts are deliberately exempt — they go
-    // through admin approval instead (US1.5), which is the appropriate
-    // check for a legitimate outside business, not a university email.
+    // A domain check prevents non-CPUT registrations, and the verification
+    // link proves control of that address. Vendors remain email-domain
+    // agnostic because admin approval is their trust check (US1.5).
     private static final Pattern CPUT_STUDENT_EMAIL =
             Pattern.compile("^[^@\\s]+@(mycput|cput)\\.ac\\.za$", Pattern.CASE_INSENSITIVE);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final EmailNotifier emailNotifier;
+    private final EmailVerificationService emailVerificationService;
     private final AccountStatusService accountStatusService;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                        JwtUtil jwtUtil, EmailNotifier emailNotifier, AccountStatusService accountStatusService) {
+                        JwtUtil jwtUtil, EmailVerificationService emailVerificationService,
+                        AccountStatusService accountStatusService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
-        this.emailNotifier = emailNotifier;
+        this.emailVerificationService = emailVerificationService;
         this.accountStatusService = accountStatusService;
     }
 
@@ -61,12 +59,14 @@ public class AuthService {
                 .campusHandle(request.getUsername() + "@cputmarket.ac.za")
                 .passwordHash(passwordEncoder.encode(request.getPassword())) // bcrypt (US1.2)
                 .role(role)
-                .verified(true) // US1.3 stub: auto-verify, no real email sent yet
+                .verified(role != Role.STUDENT)
                 .vendorApproved(role != Role.VENDOR) // STUDENT/ADMIN pre-approved; VENDOR needs admin approval (US1.5)
                 .build();
 
         User saved = userRepository.save(user);
-        emailNotifier.sendVerificationEmail(saved);
+        if (role == Role.STUDENT) {
+            emailVerificationService.createAndSendVerificationEmail(saved);
+        }
 
         return UserSummaryDto.from(saved);
     }
@@ -77,6 +77,14 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw ApiException.unauthorized("Invalid username or password");
+        }
+
+        if (user.getAccountStatus() == AccountStatus.DELETED) {
+            throw ApiException.forbidden("This account has been deleted.");
+        }
+
+        if (user.getRole() == Role.STUDENT && !user.isVerified()) {
+            throw ApiException.forbidden("Verify your CPUT email address before signing in.");
         }
 
         user = accountStatusService.resolveStatus(user); // lifts an expired timed suspension first
@@ -95,5 +103,13 @@ public class AuthService {
                 .expiresIn(jwtUtil.getExpirationSeconds())
                 .user(UserSummaryDto.from(user))
                 .build();
+    }
+
+    public void verifyEmail(String token) {
+        emailVerificationService.verifyEmail(token);
+    }
+
+    public void resendVerificationEmail(String email) {
+        emailVerificationService.resendVerificationEmail(email);
     }
 }

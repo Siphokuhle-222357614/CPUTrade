@@ -204,7 +204,7 @@ public class ChatService {
 
         // US4.3: notify whichever participant didn't send this message.
         notificationService.create(recipient, NotificationType.NEW_MESSAGE,
-                sender.getUsername() + " sent you a message about \"" + conversation.getProduct().getTitle() + "\"",
+                sender.getDisplayName() + " sent you a message about \"" + conversation.getProduct().getTitle() + "\"",
                 "/chats/" + conversation.getId());
 
         return ChatMessageResponse.from(saved);

@@ -10,6 +10,8 @@ import za.ac.cput.cputrade.user.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import za.ac.cput.cputrade.admin.AdminActionHistoryService;
+import za.ac.cput.cputrade.admin.AdminActionType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,12 +22,14 @@ public class ReportService {
     private final ReportRepository reportRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final AdminActionHistoryService actionHistory;
 
     public ReportService(ReportRepository reportRepository, ProductRepository productRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository, AdminActionHistoryService actionHistory) {
         this.reportRepository = reportRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.actionHistory = actionHistory;
     }
 
     @Transactional
@@ -64,12 +68,23 @@ public class ReportService {
     }
 
     @Transactional
-    public ReportResponse setStatus(Long id, ReportStatus status) {
+    public ReportResponse setStatus(Long id, ReportStatus status, Authentication actor) {
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Report not found"));
+        AdminActionType action = switch (status) {
+            case REVIEWED -> AdminActionType.REPORT_REVIEWED;
+            case DISMISSED -> AdminActionType.REPORT_DISMISSED;
+            case PENDING -> throw ApiException.badRequest("A report cannot be moved back to pending");
+        };
         report.setStatus(status);
         report.setReviewedAt(LocalDateTime.now());
-        return ReportResponse.from(reportRepository.save(report));
+        Report saved = reportRepository.save(report);
+        String targetLabel = saved.getReportedProduct() != null
+                ? saved.getReportedProduct().getTitle()
+                : saved.getReportedUser().getUsername();
+        actionHistory.record(actor, action, "REPORT", saved.getId(), targetLabel,
+                "Report " + status.name().toLowerCase() + " (" + saved.getReason().name() + ").");
+        return ReportResponse.from(saved);
     }
 
     private User currentUser(Authentication auth) {

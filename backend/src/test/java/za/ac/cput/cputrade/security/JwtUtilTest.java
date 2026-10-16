@@ -33,4 +33,9 @@ class JwtUtilTest {
         String forged = new JwtUtil("a-completely-different-secret-for-forging-tokens-1", 60_000).generateToken("admin");
         assertFalse(new JwtUtil(SECRET, 60_000).isTokenValid(forged, "admin"));
     }
+
+    @Test
+    void aMalformedTokenIsRejected() {
+        assertFalse(new JwtUtil(SECRET, 60_000).isTokenValid("not-a-jwt", "thabo_s"));
+    }
 }

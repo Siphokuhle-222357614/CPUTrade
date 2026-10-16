@@ -40,9 +40,9 @@ onMounted(load);
 
 <template>
   <div class="card">
-    <h3>Pending Vendor Requests</h3>
-    <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
-    <p v-if="loading">Loading…</p>
+    <h2>Pending Vendor Requests</h2>
+    <p v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</p>
+    <p v-if="loading" role="status" aria-live="polite">Loading vendor requests…</p>
     <p v-else-if="!requests.length" class="empty-state">No pending vendor requests.</p>
     <div v-else class="table-list">
       <div v-for="user in requests" :key="user.id" class="row">
@@ -50,6 +50,7 @@ onMounted(load);
         <button
           type="button"
           class="btn btn-accent"
+          :aria-label="`Approve vendor ${user.username}`"
           :disabled="approvingId === user.id"
           @click="handleApprove(user.id)"
         >

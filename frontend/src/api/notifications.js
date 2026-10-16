@@ -15,3 +15,4 @@ export function markNotificationRead(id) {
 export function markAllNotificationsRead() {
   return client.patch("/notifications/read-all");
 }
+ 

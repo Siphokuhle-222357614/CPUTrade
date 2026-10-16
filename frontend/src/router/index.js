@@ -8,6 +8,11 @@ const routes = [
     component: () => import("../views/LoginRegisterView.vue"),
   },
   {
+    path: "/verify-email",
+    name: "verify-email",
+    component: () => import("../views/VerifyEmailView.vue"),
+  },
+  {
     path: "/appeal",
     name: "appeal",
     component: () => import("../views/AppealView.vue"),
@@ -36,6 +41,19 @@ const routes = [
     name: "product-detail",
     component: () => import("../views/ProductDetailView.vue"),
     props: true,
+  },
+  {
+    path: "/checkout/:id",
+    name: "checkout",
+    component: () => import("../views/CheckoutView.vue"),
+    props: true,
+    meta: { requiresAuth: true, blockAdmin: true },
+  },
+  {
+    path: "/orders",
+    name: "orders",
+    component: () => import("../views/OrdersView.vue"),
+    meta: { requiresAuth: true },
   },
   {
     path: "/products/:id/edit",
@@ -78,6 +96,12 @@ const routes = [
     path: "/notifications",
     name: "notifications",
     component: () => import("../views/NotificationsView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/account",
+    name: "account-settings",
+    component: () => import("../views/AccountSettingsView.vue"),
     meta: { requiresAuth: true },
   },
 ];

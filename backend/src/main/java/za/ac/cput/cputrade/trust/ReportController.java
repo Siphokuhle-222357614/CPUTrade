@@ -36,12 +36,12 @@ public class ReportController {
     }
 
     @PatchMapping("/api/admin/reports/{id}/review")
-    public ResponseEntity<ReportResponse> markReviewed(@PathVariable Long id) {
-        return ResponseEntity.ok(reportService.setStatus(id, ReportStatus.REVIEWED));
+    public ResponseEntity<ReportResponse> markReviewed(@PathVariable Long id, Authentication actor) {
+        return ResponseEntity.ok(reportService.setStatus(id, ReportStatus.REVIEWED, actor));
     }
 
     @PatchMapping("/api/admin/reports/{id}/dismiss")
-    public ResponseEntity<ReportResponse> dismiss(@PathVariable Long id) {
-        return ResponseEntity.ok(reportService.setStatus(id, ReportStatus.DISMISSED));
+    public ResponseEntity<ReportResponse> dismiss(@PathVariable Long id, Authentication actor) {
+        return ResponseEntity.ok(reportService.setStatus(id, ReportStatus.DISMISSED, actor));
     }
 }

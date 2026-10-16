@@ -1,6 +1,7 @@
 package za.ac.cput.cputrade.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
@@ -61,14 +62,15 @@ public class JwtUtil {
     public boolean isTokenValid(String token, String username) {
         try {
             String extracted = extractUsername(token);
-            return extracted.equals(username) && !isTokenExpired(token);
-        } catch (Exception e) {
+            return extracted != null && extracted.equals(username) && !isTokenExpired(token);
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
 
     private boolean isTokenExpired(String token) {
-        return extractClaim(token, Claims::getExpiration).before(new Date());
+        Date expiration = extractClaim(token, Claims::getExpiration);
+        return expiration == null || expiration.before(new Date());
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> resolver) {

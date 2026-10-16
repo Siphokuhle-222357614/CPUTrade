@@ -91,7 +91,8 @@ CPUTrade is a marketplace **only for the CPUT community**:
 | **Listings** | Create, edit and delete listings with up to **6 photos** (JPEG/PNG, max 4 MB each), a quantity, condition and campus. Price `0` shows a **Freecycle** (free) badge. |
 | **Swap / barter** | Mark a listing **"open to swap"** and say what you'd swap it for. |
 | **Mark as sold** | Choose which interested buyer bought it. The listing stays up while quantity remains. |
-| **Buyer confirmation** | The buyer confirms they received the item, which unlocks rating the seller. |
+| **Orders and checkout** | Place an order for one listing at a time. Local checkout records a simulated payment only: it does not charge money or collect card details. Stock is updated transactionally, and buyers and sellers can view order history. Sellers can mark an order ready for hand-off; buyers can cancel before confirming receipt, which restores stock. |
+| **Buyer confirmation** | The buyer confirms receipt from order history (or the sale flow), which unlocks rating the seller. |
 | **Chat** | Private conversation per listing with read receipts, typing indicator, online/last-seen status, edit/delete messages, and safe meetup-location suggestions. |
 | **Wishlist** | Save listings and get alerts when the **price drops** or the item is **sold**. |
 | **Saved searches** | "Notify me about listings like this" by keyword, category and max price. |
@@ -99,6 +100,7 @@ CPUTrade is a marketplace **only for the CPUT community**:
 | **Seller dashboard** | Your listings, total views, sales, average rating, unread chats and messages from buyers. |
 | **Safety** | **Report** a user or listing (scam, inappropriate, spam, harassment, other) and **block** users. |
 | **Profiles** | Public seller profile with rating, completed sales and Verified Seller badge. |
+| **Account privacy** | Delete your account after confirming your password. Private account data and active listings are removed, and your identity is anonymized. Sale and moderation history is retained indefinitely for this school-project prototype; review this policy before real-world use. |
 
 ### For vendors (outside businesses)
 
@@ -115,6 +117,7 @@ CPUTrade is a marketplace **only for the CPUT community**:
 | **Reports queue** | Review or dismiss reports about users and listings. |
 | **User management** | Suspend accounts (with a reason, for a set time or indefinitely) and reactivate them. Suspension takes effect **immediately**, even for users who are already logged in. |
 | **Appeals** | Suspended users can submit an appeal; admins approve or reject it. |
+| **Admin action history** | View the 100 most recent vendor, listing, report, account, and appeal decisions with actor and target snapshots. |
 
 ### Platform
 
@@ -167,11 +170,16 @@ flowchart LR
 flowchart LR
     A["Seller posts listing"] --> B["Buyer finds it<br/>(search / filters /<br/>saved-search alert)"]
     B --> C["Buyer chats with seller<br/>and picks a safe<br/>meetup point"]
-    C --> D["Seller marks it sold<br/>to that buyer"]
-    D --> E["Buyer confirms<br/>they received it"]
-    E --> F["Buyer rates the seller<br/>(1–5 stars)"]
-    F --> G["3+ completed sales =<br/>Verified Seller badge"]
+    C --> D["One-listing checkout<br/>simulated payment;<br/>no real charge"]
+    D --> E["Order saved and<br/>stock updated"]
+    E --> F["Buyer confirms<br/>they received it"]
+    F --> G["Buyer rates the seller<br/>(1–5 stars)"]
+    G --> H["3+ completed sales =<br/>Verified Seller badge"]
 ```
+
+For an in-person sale arranged outside checkout, sellers can still record a
+sale for an interested buyer and use the same receipt-confirmation and rating
+flow.
 
 ### Database tables
 
@@ -180,7 +188,9 @@ You never create these by hand. Hibernate creates them when the backend starts.
 ```mermaid
 erDiagram
     USERS ||--o{ PRODUCTS : "sells"
+    USERS ||--o{ MARKETPLACE_ORDERS : "buys / sells"
     PRODUCTS ||--o{ PRODUCT_IMAGES : "has photos"
+    PRODUCTS ||--o{ MARKETPLACE_ORDERS : "ordered"
     PRODUCTS ||--o{ CONVERSATIONS : "is discussed in"
     USERS ||--o{ CONVERSATIONS : "buyer / seller"
     CONVERSATIONS ||--o{ CHAT_MESSAGES : "contains"
@@ -202,6 +212,8 @@ erDiagram
 | `users` | Every account: username, email, bcrypt password hash, role, vendor approval, suspension status, last active time. |
 | `products` | Listings: title, description, price, category, `item_condition`, campus, quantity, swap settings, sold/buyer-confirmed state, view count. |
 | `product_images` | Photo URLs for each listing, in display order (`sort_order`). |
+| `marketplace_orders` | One-listing orders, buyer/seller, title and price snapshots, quantity, simulated payment status, and receipt timestamps. |
+| `admin_actions` | Application-level append-only history of moderation and account decisions, retaining actor and target snapshots without foreign keys. |
 | `conversations` / `chat_messages` | One conversation per buyer per listing, and its messages (with read/delivered/edited/deleted state). |
 | `ratings` | 1–5 star ratings a buyer gives a seller for a specific purchase. |
 | `wishlist_items` | Listings a user has saved. |
@@ -225,7 +237,8 @@ CPUTrade/
 │   ├── db/
 │   │   ├── setup.sql              creates the database + app user (run once)
 │   │   ├── seed-admin.sql         creates the admin account
-│   │   └── seed-sample-data.sql   optional demo users, listings and posts
+│   │   ├── seed-sample-data.sql   optional demo users, listings and posts
+│   │   └── cleanup-test-listings.sql  removes old automated-test listings
 │   ├── mvnw, mvnw.cmd         ← Maven wrapper (no Maven install needed)
 │   ├── pom.xml
 │   ├── uploads/               ← listing photos saved here (created automatically, not in Git)
@@ -585,9 +598,24 @@ the password **`Password123!`**:
 | `campusprint` | VENDOR | Already approved. Offers a printing service. |
 | `quickfix_it` | VENDOR | **Not approved yet.** Log in as `admin` to approve it. |
 
-Both scripts are safe to run more than once. They skip anything that already
-exists. The demo listings have no photos, because photos are files rather than
-database rows. Add some through **Edit listing** in the app.
+Both seed scripts are safe to run more than once. They skip anything that
+already exists. The demo listings have no photos. Listing image URLs are stored
+in MySQL (`product_images`); image files are stored under
+`backend/uploads/products/`. Add photos through **Edit listing** in the app.
+
+If older integration-test runs left listings such as `ReportedListing-*` or
+`ChatListing-*` in the local MySQL database, back up the database and run
+`backend/db/cleanup-test-listings.sql`. It targets only generated `flow_...`
+test accounts, removes their listing-specific test data, and preserves
+listings with order history and admin audit snapshots.
+
+If you already identified the test products as IDs **19–30**, use
+`backend/db/cleanup-test-products-by-id.sql` instead of deleting rows directly
+from `products`. The script previews the target products and defaults to
+non-destructive mode. After backing up the database and confirming every
+previewed row is test data, change `@confirm_test_product_cleanup` to `1` and
+run it again. Products with orders are kept but hidden from the marketplace;
+their order history is preserved.
 
 Run them with the same tool you used in Step 1:
 
@@ -711,12 +739,24 @@ to edit the file:
 | `DB_PASSWORD` | `ChangeMe_StrongPass!` | Database password |
 | `PORT` | `8080` | Backend port |
 | `CORS_ALLOWED_ORIGIN` | `http://localhost:5173` | The frontend address allowed to call the API |
+| `APP_FRONTEND_BASE_URL` | `http://localhost:5173` | Frontend base URL used in verification links |
+| `EMAIL_VERIFICATION_EXPIRATION_MINUTES` | `1440` | Lifetime of a student email verification link |
+| `EMAIL_VERIFICATION_RESEND_COOLDOWN_MINUTES` | `15` | Minimum time between resend emails to one account |
 | `JWT_SECRET` | built-in dev secret | Signs login tokens. **Must** be set for any real deployment. |
 | `UPLOAD_DIR` | `./uploads` | Where listing photos are saved |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | dev keypair | Web Push keys |
 
 Frontend: `VITE_API_BASE_URL` in `frontend/.env.development` (dev) or
 `frontend/.env.production` (builds).
+
+By default, the backend uses the `local` mail profile and prints student
+verification links in its log; no SMTP account is needed for local testing.
+To send mail through a configured SMTP service, activate the `smtp` profile
+and set `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`,
+`SPRING_MAIL_PASSWORD`, and `APP_MAIL_FROM`. Also set
+`APP_FRONTEND_BASE_URL` to the frontend URL used in the email link. The SMTP
+profile is explicit; other profiles without a mail adapter fail at startup
+instead of silently logging production verification links.
 
 **Common changes:**
 
@@ -951,6 +991,7 @@ Errors always come back as JSON, for example
 | **"Something went wrong — please try again."** | The browser couldn't reach the backend. (1) Is the backend running? Open http://localhost:8080/api/products. (2) Is the frontend on **exactly** `localhost:5173`? Any other port is blocked by CORS. (3) Press F12 → **Console**. A *CORS* error means the port is wrong. *ERR_CONNECTION_REFUSED* means the backend is down. |
 | **Suspended popup** | That account is suspended. Submit an appeal, or lift the suspension with the SQL in [§13](#fix-things-by-hand). |
 | **Admin login fails right after seeding** | The seed probably ran before the tables existed. Start the backend once, then run `seed-admin.sql` again. |
+| **Deleted listings still appear** | Confirm the backend is running and reload the marketplace while online. The app now prefers the live product API and clears the previous offline listing cache when it updates. If an old frontend/service worker is still active, F12 → **Application** → **Service Workers** → **Unregister**, then **Storage** → **Clear site data**, and reload. |
 | **Page looks outdated or behaves oddly after updating the code** | The app's service worker may be serving a cached version. F12 → **Application** → **Service Workers** → **Unregister**, then **Storage** → **Clear site data**, and reload. |
 
 ### Backend won't start
@@ -986,19 +1027,49 @@ Errors always come back as JSON, for example
 
 ## 16. Known limitations
 
-- **Emails are not sent.** Registration auto-verifies accounts, and
-  vendor-approval and listing-removed emails are only written to the backend
-  log (`NoOpEmailNotifier`). A real provider can be added by implementing
-  `EmailNotifier`.
-- **Failed logins aren't rate-limited.**
-- **No automated tests yet.** Changes have been checked manually with
-  `curl`, `npm run build` and `mvnw compile`.
-- **Hibernate manages the schema.** `ddl-auto=update` is fine for local
-  development. Switch to Flyway or Liquibase migrations before running more
-  than one environment.
-- **Photos are stored on the local disk.** On hosts that wipe their disk on
-  every deploy, use a persistent volume or object storage (see
-  `DEPLOYMENT.md`).
+- **Admin notification emails remain local log messages.** Verification
+  emails have an SMTP option; vendor-approval, listing-removed, suspension,
+  and reactivation notices are logged in local mode and delivered only when
+  the SMTP profile is explicitly configured.
+- **Login rate limiting is in-memory and per backend instance.** Five failed
+  attempts for the same username/address key are blocked for 15 minutes. It
+  is not shared across multiple backend processes.
+- **Checkout is simulated, not a real payment.** Each order contains one
+  listing and the app records a `SIMULATED` payment status. It does not charge
+  money, collect card details, connect to a payment provider, or provide
+  escrow. Buyers can cancel an unreceived order to restore stock, and sellers
+  can mark an order ready for hand-off. A multi-item cart is not implemented.
+- **Admin action history is application-level append-only.** Admins can view
+  the 100 most recent vendor, listing, report, account, and appeal decisions.
+  Entries retain actor/target snapshots without foreign keys; this is not a
+  tamper-evident audit store against direct database access.
+- **Automated tests cover several layers.** The full backend suite passes all
+  55 tests, including the order lifecycle and moderation/audit integration
+  tests. Frontend Vitest passes 27 tests, the production build passes, and
+  Playwright passes 8 browser flows covering marketplace search and filters,
+  buyer/seller chat, admin report review and action history, checkout, seller
+  restrictions, cancellation and stock restoration, hand-off, receipt
+  confirmation, and rating.
+- **Account-history retention is a prototype decision.** Sale records, rating
+  scores, reports and appeals remain linked to the anonymized user ID
+  indefinitely. This policy has not had legal review and is not a claim of
+  POPIA compliance.
+- **Email is profile-dependent.** Student CPUT email ownership must be
+  verified before login. Local development logs a one-time verification link;
+  actual email delivery requires the explicitly configured SMTP profile.
+- **Hibernate manages the schema.** `ddl-auto=update` is convenient for local
+  development; schema migrations are not currently managed by Flyway or
+  Liquibase.
+- **Photos are stored on the local disk.** The configured upload directory
+  must remain available for locally stored product images.
+
+### Local test commands
+
+From `frontend/`, run `npm test` for Vitest, `npm run build` for the production
+build, and `npm run test:e2e` for the Playwright browser flows. The E2E
+configuration starts the API with seeded test accounts and an isolated H2
+database; it does not use the developer's MySQL database. Set `E2E_JAVA_HOME`
+to the JDK 21 installation when Java 21 is not already selected.
 
 ---
 

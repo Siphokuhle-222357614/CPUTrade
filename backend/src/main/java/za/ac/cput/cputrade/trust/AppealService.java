@@ -9,6 +9,9 @@ import za.ac.cput.cputrade.user.UserRepository;
 import za.ac.cput.cputrade.user.notification.EmailNotifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import za.ac.cput.cputrade.admin.AdminActionHistoryService;
+import za.ac.cput.cputrade.admin.AdminActionType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,11 +22,14 @@ public class AppealService {
     private final AppealRepository appealRepository;
     private final UserRepository userRepository;
     private final EmailNotifier emailNotifier;
+    private final AdminActionHistoryService actionHistory;
 
-    public AppealService(AppealRepository appealRepository, UserRepository userRepository, EmailNotifier emailNotifier) {
+    public AppealService(AppealRepository appealRepository, UserRepository userRepository, EmailNotifier emailNotifier,
+                         AdminActionHistoryService actionHistory) {
         this.appealRepository = appealRepository;
         this.userRepository = userRepository;
         this.emailNotifier = emailNotifier;
+        this.actionHistory = actionHistory;
     }
 
     @Transactional
@@ -45,7 +51,7 @@ public class AppealService {
     }
 
     @Transactional
-    public AppealResponse approve(Long id) {
+    public AppealResponse approve(Long id, Authentication actor) {
         Appeal appeal = findOrThrow(id);
         appeal.setStatus(AppealStatus.APPROVED);
         appeal.setResolvedAt(LocalDateTime.now());
@@ -57,15 +63,21 @@ public class AppealService {
         userRepository.save(user);
         emailNotifier.sendAccountReactivatedEmail(user);
 
-        return AppealResponse.from(appealRepository.save(appeal));
+        Appeal saved = appealRepository.save(appeal);
+        actionHistory.record(actor, AdminActionType.APPEAL_APPROVED, "APPEAL", saved.getId(),
+                user.getUsername(), "Appeal approved; account reactivated.");
+        return AppealResponse.from(saved);
     }
 
     @Transactional
-    public AppealResponse reject(Long id) {
+    public AppealResponse reject(Long id, Authentication actor) {
         Appeal appeal = findOrThrow(id);
         appeal.setStatus(AppealStatus.REJECTED);
         appeal.setResolvedAt(LocalDateTime.now());
-        return AppealResponse.from(appealRepository.save(appeal));
+        Appeal saved = appealRepository.save(appeal);
+        actionHistory.record(actor, AdminActionType.APPEAL_REJECTED, "APPEAL", saved.getId(),
+                saved.getUser().getUsername(), "Appeal rejected.");
+        return AppealResponse.from(saved);
     }
 
     private Appeal findOrThrow(Long id) {

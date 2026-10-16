@@ -45,9 +45,9 @@ onMounted(load);
 
 <template>
   <div class="card">
-    <h3>Suspension Appeals</h3>
-    <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
-    <p v-if="loading">Loading…</p>
+    <h2>Suspension Appeals</h2>
+    <p v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</p>
+    <p v-if="loading" role="status" aria-live="polite">Loading appeals…</p>
     <p v-else-if="!appeals.length" class="empty-state">No pending appeals.</p>
 
     <div v-else class="table-list">
@@ -61,6 +61,7 @@ onMounted(load);
           <button
             type="button"
             class="btn btn-outline"
+            :aria-label="`Reject appeal from ${appeal.username}`"
             :disabled="actingId === appeal.id"
             @click="handleAction(appeal.id, rejectAppeal, 'Appeal rejected.')"
           >
@@ -69,6 +70,7 @@ onMounted(load);
           <button
             type="button"
             class="btn btn-accent"
+            :aria-label="`Approve appeal from ${appeal.username} and reactivate account`"
             :disabled="actingId === appeal.id"
             @click="handleAction(appeal.id, approveAppeal, `${appeal.username} reactivated. ✅`)"
           >

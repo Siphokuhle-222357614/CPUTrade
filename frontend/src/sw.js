@@ -4,7 +4,7 @@
 // reason this file exists instead of the default.
 import { createHandlerBoundToURL, precacheAndRoute } from "workbox-precaching";
 import { NavigationRoute, registerRoute } from "workbox-routing";
-import { StaleWhileRevalidate } from "workbox-strategies";
+import { NetworkFirst } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 
 // Injected by vite-plugin-pwa at build time with the app-shell file list —
@@ -24,22 +24,25 @@ if (precacheManifest.length > 0) {
   registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html"), { denylist: [/^\/api\//] }));
 }
 
-// Product listings/images are safe to show briefly stale while a fresh copy
-// loads in the background — keeps browsing snappy on poor campus wifi/mobile
-// data without ever going fully offline for a logged-in, personalized view.
+// Always prefer the live product feed so deleted listings disappear as soon
+// as the backend responds. Fall back to the last response only when offline.
 // Everything else (auth, chat, admin, wishlist, push) is deliberately left
 // un-cached so a stale response can never show someone a suspended account
 // as active or someone else's chat thread.
 registerRoute(
   ({ url, request }) => request.method === "GET" && /\/api\/products(\/|$|\?)/.test(url.pathname + url.search),
-  new StaleWhileRevalidate({
-    cacheName: "cputrade-products",
+  new NetworkFirst({
+    cacheName: "cputrade-products-v2",
     plugins: [new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 60 * 60 })],
   })
 );
 
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener("activate", (event) =>
+  event.waitUntil(
+    caches.delete("cputrade-products").then(() => self.clients.claim())
+  )
+);
 
 // Shows the notification the backend's WebPushService sent, whether or not
 // the app is open in a tab right now — the entire point of push over the

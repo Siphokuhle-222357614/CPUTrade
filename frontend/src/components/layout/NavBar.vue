@@ -89,6 +89,7 @@ const initials = computed(() => {
         <router-link to="/board">Board</router-link>
         <router-link v-if="auth.isAuthenticated && !auth.isAdmin" to="/wishlist">Wishlist</router-link>
         <router-link v-if="auth.isAuthenticated" to="/chats">Chats</router-link>
+        <router-link v-if="auth.isAuthenticated" to="/orders">Orders</router-link>
         <router-link v-if="auth.isAdmin" to="/admin">Admin</router-link>
 
         <router-link
@@ -119,6 +120,7 @@ const initials = computed(() => {
             <div v-if="userMenuOpen" class="navbar-dropdown">
               <p class="navbar-dropdown-handle">{{ auth.user?.campusHandle }}</p>
               <router-link v-if="!auth.isAdmin" to="/dashboard" @click="closeMenus">📊 Dashboard</router-link>
+              <router-link to="/account" @click="closeMenus">🔒 Account settings</router-link>
               <button type="button" @click="handleLogout">🚪 Log out</button>
             </div>
           </Transition>
@@ -150,9 +152,13 @@ const initials = computed(() => {
           ❤️ Wishlist
         </router-link>
         <router-link v-if="auth.isAuthenticated" to="/chats" @click="closeMenus">💬 Chats</router-link>
+        <router-link v-if="auth.isAuthenticated" to="/orders" @click="closeMenus">📦 Orders</router-link>
         <router-link v-if="auth.isAuthenticated" to="/notifications" @click="closeMenus">
           🔔 Notifications
           <span v-if="unreadCount > 0" class="badge badge-free">{{ unreadCount }}</span>
+        </router-link>
+        <router-link v-if="auth.isAuthenticated" to="/account" @click="closeMenus">
+          🔒 Account settings
         </router-link>
         <router-link v-if="auth.isAdmin" to="/admin" @click="closeMenus">🛠️ Admin</router-link>
         <router-link

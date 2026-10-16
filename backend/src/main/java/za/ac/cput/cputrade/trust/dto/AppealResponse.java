@@ -22,7 +22,7 @@ public class AppealResponse {
     public static AppealResponse from(Appeal appeal) {
         return AppealResponse.builder()
                 .id(appeal.getId())
-                .username(appeal.getUser().getUsername())
+                .username(appeal.getUser().getDisplayName())
                 .message(appeal.getMessage())
                 .status(appeal.getStatus())
                 .createdAt(appeal.getCreatedAt())

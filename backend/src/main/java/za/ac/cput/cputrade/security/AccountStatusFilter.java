@@ -55,10 +55,14 @@ public class AccountStatusFilter extends OncePerRequestFilter {
 
     private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD", "OPTIONS");
 
+    private static final RequestMatcher ACCOUNT_DELETION =
+            PathPatternRequestMatcher.pathPattern(HttpMethod.DELETE, "/api/account");
+
     private static final List<RequestMatcher> VENDOR_ALLOWLIST_WHILE_PENDING = List.of(
             PathPatternRequestMatcher.pathPattern(HttpMethod.PATCH, "/api/notifications/**"),
             PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/users/*/block"),
             PathPatternRequestMatcher.pathPattern(HttpMethod.DELETE, "/api/users/*/block"),
+            ACCOUNT_DELETION,
             PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/appeals")
     );
 
@@ -83,7 +87,12 @@ public class AccountStatusFilter extends OncePerRequestFilter {
             if (maybeUser.isPresent()) {
                 User user = accountStatusService.resolveStatus(maybeUser.get());
 
-                if (user.getAccountStatus() == AccountStatus.SUSPENDED) {
+                if (user.getAccountStatus() == AccountStatus.DELETED) {
+                    writeError(response, "This account has been deleted.");
+                    return;
+                }
+
+                if (user.getAccountStatus() == AccountStatus.SUSPENDED && !ACCOUNT_DELETION.matches(request)) {
                     String reasonSuffix = user.getSuspensionReason() != null ? ": " + user.getSuspensionReason() + "." : ".";
                     writeError(response, "Your account has been suspended" + reasonSuffix
                             + " If you believe this is a mistake, submit an appeal.");

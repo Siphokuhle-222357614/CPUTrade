@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import za.ac.cput.cputrade.product.dto.ProductResponse;
 import za.ac.cput.cputrade.user.dto.SuspendUserRequest;
 import za.ac.cput.cputrade.user.dto.UserSummaryDto;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,9 +16,11 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
+    private final AdminActionHistoryService actionHistory;
 
-    public AdminController(AdminService adminService) {
+    public AdminController(AdminService adminService, AdminActionHistoryService actionHistory) {
         this.adminService = adminService;
+        this.actionHistory = actionHistory;
     }
 
     @GetMapping("/vendor-requests")
@@ -26,8 +29,8 @@ public class AdminController {
     }
 
     @PostMapping("/vendor-requests/{userId}/approve")
-    public ResponseEntity<UserSummaryDto> approveVendor(@PathVariable Long userId) {
-        return ResponseEntity.ok(adminService.approveVendor(userId));
+    public ResponseEntity<UserSummaryDto> approveVendor(@PathVariable Long userId, Authentication actor) {
+        return ResponseEntity.ok(adminService.approveVendor(userId, actor));
     }
 
     @GetMapping("/listings")
@@ -36,18 +39,19 @@ public class AdminController {
     }
 
     @PatchMapping("/listings/{id}/deactivate")
-    public ResponseEntity<ProductResponse> deactivateListing(@PathVariable Long id) {
-        return ResponseEntity.ok(adminService.deactivateListing(id));
+    public ResponseEntity<ProductResponse> deactivateListing(@PathVariable Long id, Authentication actor) {
+        return ResponseEntity.ok(adminService.deactivateListing(id, actor));
     }
 
     @PostMapping("/users/{userId}/suspend")
-    public ResponseEntity<UserSummaryDto> suspendUser(@PathVariable Long userId, @Valid @RequestBody SuspendUserRequest request) {
-        return ResponseEntity.ok(adminService.suspendUser(userId, request));
+    public ResponseEntity<UserSummaryDto> suspendUser(@PathVariable Long userId, @Valid @RequestBody SuspendUserRequest request,
+                                                       Authentication actor) {
+        return ResponseEntity.ok(adminService.suspendUser(userId, request, actor));
     }
 
     @PostMapping("/users/{userId}/reactivate")
-    public ResponseEntity<UserSummaryDto> reactivateUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(adminService.reactivateUser(userId));
+    public ResponseEntity<UserSummaryDto> reactivateUser(@PathVariable Long userId, Authentication actor) {
+        return ResponseEntity.ok(adminService.reactivateUser(userId, actor));
     }
 
     @GetMapping("/users/suspended")
@@ -59,5 +63,10 @@ public class AdminController {
     @GetMapping("/users")
     public ResponseEntity<List<UserSummaryDto>> allUsers() {
         return ResponseEntity.ok(adminService.allNonAdminUsers());
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<AdminActionResponse>> actionHistory() {
+        return ResponseEntity.ok(actionHistory.latest());
     }
 }

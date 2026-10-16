@@ -6,6 +6,7 @@ import za.ac.cput.cputrade.chat.ConversationRepository;
 import za.ac.cput.cputrade.common.exception.ApiException;
 import za.ac.cput.cputrade.notification.NotificationService;
 import za.ac.cput.cputrade.notification.NotificationType;
+import za.ac.cput.cputrade.order.PurchaseOrderRepository;
 import za.ac.cput.cputrade.product.dto.AddImagesRequest;
 import za.ac.cput.cputrade.product.dto.BuyerSummary;
 import za.ac.cput.cputrade.product.dto.MarkSoldRequest;
@@ -42,6 +43,7 @@ public class ProductService {
     private static final int MAX_IMAGES_PER_PRODUCT = 6;
 
     private final ProductRepository productRepository;
+    private final PurchaseOrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ConversationRepository conversationRepository;
     private final ChatMessageRepository chatMessageRepository;
@@ -51,12 +53,14 @@ public class ProductService {
     private final NotificationService notificationService;
     private final SavedSearchService savedSearchService;
 
-    public ProductService(ProductRepository productRepository, UserRepository userRepository,
+    public ProductService(ProductRepository productRepository, PurchaseOrderRepository orderRepository,
+                           UserRepository userRepository,
                            ConversationRepository conversationRepository, ChatMessageRepository chatMessageRepository,
                            RatingService ratingService, ImageStorageService imageStorageService,
                            WishlistItemRepository wishlistItemRepository, NotificationService notificationService,
                            SavedSearchService savedSearchService) {
         this.productRepository = productRepository;
+        this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.conversationRepository = conversationRepository;
         this.chatMessageRepository = chatMessageRepository;
@@ -231,7 +235,7 @@ public class ProductService {
         Map<Long, BuyerSummary> byBuyerId = new LinkedHashMap<>();
         for (Conversation conversation : conversationRepository.findByProductIdOrderByCreatedAtDesc(id)) {
             User buyer = conversation.getBuyer();
-            byBuyerId.putIfAbsent(buyer.getId(), BuyerSummary.builder().id(buyer.getId()).username(buyer.getUsername()).build());
+            byBuyerId.putIfAbsent(buyer.getId(), BuyerSummary.builder().id(buyer.getId()).username(buyer.getDisplayName()).build());
         }
         return List.copyOf(byBuyerId.values());
     }
@@ -286,7 +290,7 @@ public class ProductService {
             if (soldTo != null) {
                 try {
                     notificationService.create(soldTo, NotificationType.CONFIRM_RECEIPT_REQUESTED,
-                            saved.getSeller().getUsername() + " marked \"" + saved.getTitle()
+                            saved.getSeller().getDisplayName() + " marked \"" + saved.getTitle()
                                     + "\" as sold to you — confirm you received it so you can rate them",
                             "/products/" + saved.getId());
                 } catch (Exception e) {
@@ -322,7 +326,7 @@ public class ProductService {
         Product saved = productRepository.save(product);
         try {
             notificationService.create(saved.getSeller(), NotificationType.RECEIPT_CONFIRMED,
-                    buyer.getUsername() + " confirmed they received \"" + saved.getTitle() + "\"",
+                    buyer.getDisplayName() + " confirmed they received \"" + saved.getTitle() + "\"",
                     "/products/" + saved.getId());
         } catch (Exception e) {
             log.warn("Could not notify seller {} that receipt was confirmed for product {}", saved.getSeller().getId(), saved.getId(), e);
@@ -357,6 +361,9 @@ public class ProductService {
     public void delete(Long id, Authentication auth) {
         Product product = findByIdOrThrow(id);
         requireOwnerOrAdmin(product, auth);
+        if (orderRepository.existsByProductId(id)) {
+            throw ApiException.conflict("This listing has order history and cannot be deleted");
+        }
 
         // All of this must go before the product row itself — every one of these
         // tables has a NOT NULL FK onto products.id. Deleting a listing a buyer had

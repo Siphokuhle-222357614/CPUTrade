@@ -10,4 +10,6 @@ public interface BulletinPostRepository extends JpaRepository<BulletinPost, Long
 
     /** Powers the Lost & Found filter pills on the board. */
     List<BulletinPost> findByTypeOrderByCreatedAtDesc(BulletinType type);
+
+    void deleteByAuthorId(Long authorId);
 }

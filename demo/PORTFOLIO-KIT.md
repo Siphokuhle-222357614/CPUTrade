@@ -25,7 +25,7 @@ Everyone also helps with the video.
 
 ---
 
-## 1. Fact sheet about the system (verified from the repo, 9 Oct 2026)
+## 1. Fact sheet about the system (verified from the repo, 16 Oct 2026)
 
 Use these so your documents match the real product. Cite them in your own sentences.
 
@@ -33,24 +33,26 @@ Use these so your documents match the real product. Cite them in your own senten
 
 **Stack:** Backend Spring Boot 4 (Java 21), Spring Security + JWT, Spring Data JPA/Hibernate. Database MySQL/MariaDB. Frontend Vue 3, Vite, Vue Router, Pinia, Axios, PWA with Web Push.
 
-**Size:** 39 git commits since 14 Sep 2026; about 65 API endpoints; 10 feature modules (admin, bulletin, chat, notification, product, profile, push, rating, trust, user) plus shared common/config/security/storage; 13 database tables (users, products, product_images, conversations, chat_messages, ratings, wishlist_items, saved_searches, notifications, push_subscriptions, bulletin_posts, reports, appeals, user_blocks); 12 screens.
+**Size:** 39 git commits since 14 Sep 2026; about 70 API endpoints; 11 feature modules (admin, bulletin, chat, notification, order, product, profile, push, rating, trust, user) plus shared common/config/security/storage; 15 database tables, including marketplace orders; mobile-first screens for the app's core flows.
 
-**Roles:** STUDENT (CPUT email only: `@mycput.ac.za` / `@cput.ac.za`), VENDOR (any email, **needs admin approval**), ADMIN (cannot be self-registered).
+**Roles:** STUDENT (CPUT email domain and email ownership verified before login), VENDOR (any email, **needs admin approval**), ADMIN (cannot be self-registered).
 
 **Features:** listings with up to 6 photos (JPEG/PNG, now max **4 MB** each); search, category, campus (5 campuses) and price filters; swap/barter; Freecycle (R0); mark as sold to a chosen buyer; **buyer confirms receipt before rating** the seller; chat with read receipts and safe meet-up suggestions; wishlist with price-drop and sold alerts; saved searches; in-app + Web Push notifications; seller dashboard; reports, blocking, admin moderation, suspensions and appeals; bulletin board with Lost and Found; WhatsApp share; offline cache.
 
-**Security measures:** bcrypt password hashing; JWT (24h expiry); role-based access; CPUT-only email rule; suspension takes effect immediately; image header check (not just file name); **login rate limiting** (5 wrong passwords per username+address, 15-minute lock, HTTP 429); **startup check** that refuses dev secrets in production mode; database row lock on sale actions.
+**Security measures:** bcrypt password hashing; JWT (24h expiry); role-based access; CPUT-only email rule; suspension takes effect immediately; image header check (not just file name); **login rate limiting** (5 wrong passwords per username+address, 15-minute lock, HTTP 429); **startup check** that refuses dev secrets in production mode; transactional stock updates for sale and checkout actions.
 
 **Testing done (these are facts you can report):**
-- 25 automated backend tests, all passing: CPUT-email rule (incl. lookalike domains), vendor approval, password hashing, duplicate username, wrong password, JWT validity/expiry/forgery, image validation (JPEG/PNG, size limit, bad base64), login rate limiter, production secrets check, app context loads.
+- All 55 backend tests, 27 frontend Vitest tests, and 8 Playwright browser flows passed. The focused order integration tests (4) and moderation/audit tests (2) are included. Coverage includes CPUT-email validation (including lookalike domains), email verification and login gating, vendor approval, password hashing, account anonymization and deleted-account login rejection, JWT validity/expiry/forgery, image validation, login rate limiting, production secrets checks, marketplace filters, buyer/seller chat persistence, admin report review/action history, checkout/order behavior, auth UI and route guards.
 - Live checks on the running app: rate limiting (attempts 1-5 returned 401, 6-7 returned 429; a real login still worked); concurrency test found a **real bug** (6 simultaneous mark-sold requests reduced stock by 1 instead of 6), fixed with a row lock and re-tested (50 to 44); 3.8 MB photo accepted, 4.5 MB rejected; duplicate-submit errors return 409.
-- Not automated: marketplace, chat, rating and admin flows were tested manually only.
+- Account lifecycle API probe: vendor registration returned 201, login returned 200, wrong-password deletion was rejected with 403, and password-confirmed deletion returned 204. The manual probe did not confirm that the previously issued bearer token is rejected after deletion.
+- Browser E2E covers simulated checkout and order history, marketplace search/filters, buyer/seller chat persistence, and admin report review/action history. Vendor approval, suspension/appeals, bulletin, wishlist and PWA installation remain manual or backend-covered rather than browser-automated.
 
 **Deliberate limits and gaps against the brief (be honest about these, see Final Report):**
-- **No cart, checkout or payment gateway** (the brief lists "cart & checkout, payment integration"; PayFast/SnapScan not integrated). Trade is arranged in chat and paid in person; the buyer-confirmation step is the trust control.
+- **A one-listing simulated checkout is implemented**, with order history and buyer receipt confirmation; there is no multi-item cart, real payment processing, payment gateway or escrow. The simulated payment does not charge users or collect card data.
 - **Modular monolith, not microservices**; no Redis cache; no cloud auto-scaling; runs locally.
 - **No AI fraud detection or 2FA**; fraud control is reports, moderation, blocking, rate limiting and rating rules.
-- **No real email verification** (accounts are auto-verified; email is a stub).
+- **Email delivery is profile-dependent.** The local profile logs single-use verification links; optional SMTP delivery requires configuration. Student accounts cannot log in before link confirmation.
+- **Privacy policy and retention review remain future work.** Anonymized sale and moderation history is retained indefinitely for this school-project prototype; that choice has not had legal review and must not be presented as POPIA compliance.
 - Login rate limiting is in memory (single server). Photos are stored on local disk.
 - Schema is created by Hibernate, not migrations.
 - Vendor "business registration" check is manual admin approval.
@@ -90,7 +92,7 @@ Test table template (run each yourselves and fill in Actual and Pass/Fail):
 | ID | Scenario | Steps | Expected | Actual | Pass? |
 |---|---|---|---|---|---|
 | T1 | Student must use CPUT email | Register STUDENT with a gmail address | Rejected with message | | |
-| T2 | Student registers with CPUT email | Register with x@mycput.ac.za | Account created | | |
+| T2 | Student registers with CPUT email | Register with x@mycput.ac.za | Account is created unverified; sign-in is blocked until verification | | |
 | T3 | Vendor needs approval | Log in as quickfix_it, try to create a listing | Blocked until admin approves | | |
 | T4 | Wrong-password lockout | 6 wrong logins for one username | 6th returns "Too many attempts" | | |
 | T5 | Create listing with photo | Dashboard, New Listing, add a 3 MB JPEG | Listing shows photo | | |
@@ -148,7 +150,7 @@ Risk register template:
 | ID | Risk (cause, event, effect) | Category | Prob. | Impact | Score | Response (Avoid/Mitigate/Transfer/Accept) | Action | Owner | Status |
 |---|---|---|---|---|---|---|---|---|---|
 
-Candidate risks drawn from this project *(ideas, rate them yourselves)*: fake accounts using someone else's CPUT email (no real email verification); vendor fraud; payment fraud (you chose in-person payment); dev secrets leaking from the repo; brute-force logins; double-submission races on sales (found and fixed); data loss (photos stored on disk, no automated backup); low adoption versus WhatsApp/Facebook; team member unavailable or uneven workload; scope creep against the brief (payments, microservices); deadline compression; hosting/offline failure at demo time.
+Candidate risks drawn from this project *(ideas, rate them yourselves)*: verification mail misconfiguration or local-log access; vendor fraud; payment fraud (you chose in-person payment); dev secrets leaking from the repo; brute-force logins; double-submission races on sales (found and fixed); data loss (photos stored on disk, no automated backup); low adoption versus WhatsApp/Facebook; team member unavailable or uneven workload; scope creep against the brief (payments, microservices); deadline compression; local/offline failure at demo time.
 
 RAID log template (one table with a Type column):
 
@@ -164,7 +166,7 @@ Sections: quality objectives (measurable); standards and conventions (e.g. REST 
 | Quality objective | Metric / target | How measured | Frequency | Owner |
 |---|---|---|---|---|
 
-Evidence you have: 25 automated tests; CI workflow that builds and tests on every push (`.github/workflows/ci.yml`); manual test table (3.1); a real defect found by testing and its fix; input validation (email domain, image type/size, passwords 8+ chars); acceptance criteria per user story from your backlog.
+Evidence you have: 55 passing backend tests, including 4 order lifecycle tests and 2 moderation/audit tests; 27 passing frontend unit tests; 5 passing Playwright browser tests; CI workflow that builds and tests on every push (`.github/workflows/ci.yml`); manual test table (3.1); a real defect found by testing and its fix; input validation (email domain, verification, image type/size, passwords 8+ chars); account-anonymization coverage; acceptance criteria per user story from your backlog.
 Prompts: what does "done" mean for a story? Who signs off? What would you automate next?
 
 ### 3.6 Transition and Closure Plan (2 pages)
@@ -174,7 +176,7 @@ Parts: transition plan (hand-over to a client or next team), training, support, 
 | Item | Detail | Owner | Done? |
 |---|---|---|---|
 
-Include *(idea)*: deliverables handed over (source, database scripts, demo seed data, README, DEPLOYMENT.md); setup steps (README steps 0-5); production checklist (set `JWT_SECRET`, DB password, VAPID keys, `SPRING_PROFILES_ACTIVE=prod`, HTTPS, CORS origin, first admin account); known limitations and recommended next steps (payment gateway, email verification, migrations, cloud storage, monitoring); admin training (vendor approval, reports, suspensions, appeals); support and maintenance responsibility; acceptance sign-off; archive repository and documents; release team members; final stakeholder communication; lessons learned session.
+Include *(idea)*: deliverables handed over (source, database scripts, demo seed data, README, DEPLOYMENT.md); setup steps (README steps 0-5); production checklist (set `JWT_SECRET`, DB password, VAPID keys, `SPRING_PROFILES_ACTIVE=prod`, HTTPS, CORS origin, first admin account, SMTP settings if email delivery is needed); known limitations and recommended next steps (payment gateway, migrations, cloud storage, monitoring); admin training (vendor approval, reports, suspensions, appeals); support and maintenance responsibility; acceptance sign-off; archive repository and documents; release team members; final stakeholder communication; lessons learned session.
 
 ### 3.7 Reflection and Lessons Learned
 
